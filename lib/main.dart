@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:esociety/screens/dashboard_screen.dart';
 import 'package:esociety/screens/payments_screen.dart';
 import 'package:esociety/screens/profile_screen.dart';
+import 'package:esociety/models/user_profile.dart';
 
 void main() {
   runApp(const MainApp());
@@ -31,11 +32,21 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _widgetOptions = <Widget>[
-    DashboardScreen(), //Index 0 : Dashboard
-    PaymentsScreen(), //Index 1: Payments
-    ProfileScreen(), //Index 2: Profile
-  ];
+  // Centralized state for user profile, managed by the AppShell.
+  UserProfile _userProfile = UserProfile(
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+    phone: '+1 234 567 890',
+    societyNumber: 'A-12345',
+  );
+
+  // Callback for the ProfileScreen to update the user's data.
+  void _updateProfile(UserProfile newProfile) {
+    // This will trigger a rebuild of AppShell, updating the drawer header.
+    setState(() {
+      _userProfile = newProfile;
+    });
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -45,62 +56,76 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    // List of widgets to call in the body. We pass the navigation function
+    // to the DashboardScreen so it can switch tabs.
+    final List<Widget> widgetOptions = <Widget>[
+      DashboardScreen(onNavigate: _onItemTapped), //Index 0 : Dashboard
+      const PaymentsScreen(), //Index 1: Payments
+      ProfileScreen(
+        userProfile: _userProfile,
+        onProfileUpdated: _updateProfile,
+      ), //Index 2: Profile
+    ];
+
+    const List<String> titles = <String>['Dashboard', 'Payments', 'Profile'];
+
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('eSociety'),
+        title: Text(titles[_selectedIndex]),
         centerTitle: true,
         backgroundColor: Colors.blue[800],
       ),
-
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
-            Container(
-              padding: EdgeInsets.all(20),
-              margin: EdgeInsets.zero,
-              decoration: BoxDecoration(color: Colors.blue),
-              child: const Center(
+            UserAccountsDrawerHeader(
+              accountName: Text(
+                _userProfile.name,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              accountEmail: Text(_userProfile.email),
+              currentAccountPicture: CircleAvatar(
+                backgroundColor: Colors.white,
                 child: Text(
-                  'Menu',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  _userProfile.name.isNotEmpty
+                      ? _userProfile.name[0].toUpperCase()
+                      : 'U',
+                  style: TextStyle(fontSize: 40.0, color: Colors.blue[800]),
                 ),
               ),
+              decoration: BoxDecoration(color: Colors.blue[800]),
             ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Dashboard'),
-              onTap: () {
-                _onItemTapped(0);
-                Navigator.pop(context);
-              },
-            ),
+            _buildDrawerItem(icon: Icons.home, title: 'Dashboard', index: 0),
+            _buildDrawerItem(icon: Icons.payment, title: 'Payments', index: 1),
+            _buildDrawerItem(icon: Icons.person, title: 'Profile', index: 2),
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.payment),
-              title: const Text('Payments'),
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 8.0,
+              ),
               onTap: () {
-                _onItemTapped(1);
+                // Add logout logic here
                 Navigator.pop(context);
               },
             ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('Profile'),
-              onTap: () {
-                _onItemTapped(2);
-                Navigator.pop(context);
-              },
+            const Spacer(), // Pushes the version number to the bottom
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'Version 1.0.0',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey),
+              ),
             ),
           ],
         ),
       ),
-      body: Center(child: _widgetOptions.elementAt(_selectedIndex)),
+      body: Center(child: widgetOptions.elementAt(_selectedIndex)),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Dashboard'),
@@ -109,6 +134,36 @@ class _AppShellState extends State<AppShell> {
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+      ),
+    );
+  }
+
+  // Helper method to build drawer items to reduce code repetition
+  // and handle selection state.
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required int index,
+  }) {
+    final bool isSelected = _selectedIndex == index;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: isSelected ? Colors.blue : Colors.transparent,
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: isSelected ? Colors.blue[800] : null),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        onTap: () {
+          _onItemTapped(index);
+          Navigator.pop(context);
+        },
       ),
     );
   }

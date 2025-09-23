@@ -15,10 +15,16 @@ class _Transaction {
   });
 }
 
-class PaymentsScreen extends StatelessWidget {
+class PaymentsScreen extends StatefulWidget {
   const PaymentsScreen({super.key});
 
+  @override
+  State<PaymentsScreen> createState() => _PaymentsScreenState();
+}
+
+class _PaymentsScreenState extends State<PaymentsScreen> {
   // Dummy data for the transaction list
+  // This will be replaced with data from your mock API in a future step.
   final List<_Transaction> _transactions = const [
     _Transaction(
       title: 'Monthly Maintenance',
@@ -51,7 +57,7 @@ class PaymentsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      itemCount: _transactions.length,
+      itemCount: _transactions.length, // Use the state's list
       itemBuilder: (context, index) {
         final transaction = _transactions[index];
         return Card(

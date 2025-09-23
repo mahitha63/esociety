@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  // Callback to allow this screen to trigger navigation in the parent AppShell
+  final Function(int) onNavigate;
+
+  const DashboardScreen({super.key, required this.onNavigate});
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +39,10 @@ class DashboardScreen extends StatelessWidget {
                 Align(
                   alignment: Alignment.centerRight,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      // Navigate to the Payments screen (index 1)
+                      onNavigate(1);
+                    },
                     child: const Text('Pay Now'),
                   ),
                 ),

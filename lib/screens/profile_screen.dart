@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:esociety/models/user_profile.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final UserProfile userProfile;
+  final Function(UserProfile) onProfileUpdated;
+
+  const ProfileScreen({
+    super.key,
+    required this.userProfile,
+    required this.onProfileUpdated,
+  });
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -19,11 +27,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize controllers with dummy data
-    _nameController = TextEditingController(text: 'John Doe');
-    _emailController = TextEditingController(text: 'john.doe@example.com');
-    _phoneController = TextEditingController(text: '+1 234 567 890');
-    _societyNumberController = TextEditingController(text: 'A-12345');
+    // Initialize controllers with data from the UserProfile passed into the widget
+    _nameController = TextEditingController(text: widget.userProfile.name);
+    _emailController = TextEditingController(text: widget.userProfile.email);
+    _phoneController = TextEditingController(text: widget.userProfile.phone);
+    _societyNumberController = TextEditingController(
+      text: widget.userProfile.societyNumber,
+    );
   }
 
   @override
@@ -45,7 +55,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: CircleAvatar(
             radius: 50,
             backgroundColor: Colors.black12,
-            child: Icon(Icons.person, size: 60, color: Colors.white),
+            child: Icon(Icons.person, size: 60, color: Colors.blueGrey),
           ),
         ),
         const SizedBox(height: 24),
@@ -97,8 +107,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPressed: () {
               setState(() {
                 if (_isEditing) {
-                  // Here you would add logic to save the data
-                  // For now, we just exit the editing mode
+                  // When saving, create a new UserProfile object and pass it up.
+                  widget.onProfileUpdated(
+                    UserProfile(
+                      name: _nameController.text,
+                      email: _emailController.text,
+                      phone: _phoneController.text,
+                      societyNumber: _societyNumberController.text,
+                      image: widget
+                          .userProfile
+                          .image, // Preserve the existing image
+                    ),
+                  );
                   _isEditing = false;
                 } else {
                   // Enter editing mode
