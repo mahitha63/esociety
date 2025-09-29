@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:esociety/models/user_profile.dart';
+import '../models/user_profile.dart';
 
 class ProfileScreen extends StatefulWidget {
   final UserProfile userProfile;

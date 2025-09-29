@@ -1,11 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:esociety/screens/dashboard_screen.dart';
-import 'package:esociety/screens/payments_screen.dart';
-import 'package:esociety/screens/profile_screen.dart';
-import 'package:esociety/models/user_profile.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import '../screens/splash_screen.dart';
+import '../screens/login_screen.dart';
+import '../screens/signup_screen.dart';
+import '../screens/reports_screen.dart';
+import '../screens/dashboard_screen.dart';
+import '../screens/payments_screen.dart';
+import '../screens/profile_screen.dart';
+import '../models/user_profile.dart';
+
+// --- DEVELOPMENT ---
+// Set to `true` to bypass login and go directly to the dashboard.
+const bool _devBypassLogin = true;
 
 void main() {
-  runApp(const MainApp());
+  runApp(
+    MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
+      child: const MainApp(),
+    ),
+  );
 }
 
 class MainApp extends StatelessWidget {
@@ -13,30 +28,58 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false, // to remove the debug banner
-      title: 'eSociety',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const AppShell(),
+    return Consumer<AuthProvider>(
+      builder: (context, auth, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false, // to remove the debug banner
+          title: 'eSociety',
+          theme: ThemeData(primarySwatch: Colors.blue),
+          //home: auth.isAuthenticated
+          home: _devBypassLogin || auth.isAuthenticated
+              ? AppShell(
+                  // Pass user data from provider to the AppShell
+                  //username: auth.username ?? 'User',
+                  //role: auth.role ?? 'user',
+                  // When bypassing login, use dummy data.
+                  // Change 'role' to 'admin' to test admin UI.
+                  username: _devBypassLogin
+                      ? 'dev_user'
+                      : auth.username ?? 'User',
+                  role: _devBypassLogin ? 'user' : auth.role ?? 'user',
+                )
+              : SplashScreen(),
+          routes: {
+            LoginScreen.routeName: (_) => LoginScreen(),
+            SignupScreen.routeName: (_) => SignupScreen(),
+            ReportsScreen.routeName: (_) => ReportsScreen(),
+          },
+        );
+      },
     );
   }
 }
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  final String username;
+  final String role;
+
+  const AppShell({super.key, required this.username, required this.role});
 
   @override
   State<AppShell> createState() => _AppShellState();
 }
 
 class _AppShellState extends State<AppShell> {
+  static const int _userHomeIndex = 0; // Dashboard
+  static const int _adminHomeIndex = 3; // Reports
+
   int _selectedIndex = 0;
 
   // Centralized state for user profile, managed by the AppShell.
   UserProfile _userProfile = UserProfile(
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 234 567 890',
+    name: 'User', // Will be updated in initState
+    email: 'user@example.com',
+    phone: 'N/A',
     societyNumber: 'A-12345',
   );
 
@@ -55,6 +98,21 @@ class _AppShellState extends State<AppShell> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Set the initial screen based on the user's role.
+    // Admins land on the Reports screen, others on the Dashboard.
+    _selectedIndex = widget.role == 'admin' ? _adminHomeIndex : _userHomeIndex;
+    // Initialize the user profile with data passed from the AuthProvider
+    _userProfile = UserProfile(
+      name: widget.username,
+      email: '${widget.username}@example.com', // Placeholder email
+      phone: _userProfile.phone,
+      societyNumber: _userProfile.societyNumber,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     // List of widgets to call in the body. We pass the navigation function
     // to the DashboardScreen so it can switch tabs.
@@ -65,9 +123,16 @@ class _AppShellState extends State<AppShell> {
         userProfile: _userProfile,
         onProfileUpdated: _updateProfile,
       ), //Index 2: Profile
+      if (widget.role == 'admin')
+        ReportsScreen(), // Index 3: Reports (Admin only)
     ];
 
-    const List<String> titles = <String>['Dashboard', 'Payments', 'Profile'];
+    final List<String> titles = <String>[
+      'Dashboard',
+      'Payments',
+      'Profile',
+      if (widget.role == 'admin') 'Reports',
+    ];
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -100,6 +165,13 @@ class _AppShellState extends State<AppShell> {
             _buildDrawerItem(icon: Icons.home, title: 'Dashboard', index: 0),
             _buildDrawerItem(icon: Icons.payment, title: 'Payments', index: 1),
             _buildDrawerItem(icon: Icons.person, title: 'Profile', index: 2),
+            // Conditionally show the Reports item in the drawer
+            if (widget.role == 'admin')
+              _buildDrawerItem(
+                icon: Icons.bar_chart,
+                title: 'Reports',
+                index: 3,
+              ),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.logout),
@@ -109,8 +181,8 @@ class _AppShellState extends State<AppShell> {
                 vertical: 8.0,
               ),
               onTap: () {
-                // Add logout logic here
-                Navigator.pop(context);
+                // Call the logout method from the provider
+                Provider.of<AuthProvider>(context, listen: false).logout();
               },
             ),
             const Spacer(), // Pushes the version number to the bottom
@@ -127,10 +199,15 @@ class _AppShellState extends State<AppShell> {
       ),
       body: Center(child: widgetOptions.elementAt(_selectedIndex)),
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
+        items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Payments'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          if (widget.role == 'admin')
+            BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart),
+              label: 'Reports',
+            ),
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

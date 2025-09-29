@@ -29,27 +29,27 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     _Transaction(
       title: 'Monthly Maintenance',
       date: '01 Nov 2023',
-      amount: '\$150.00',
+      amount: '₹300.00',
     ),
     _Transaction(
       title: 'Gym Access Fee',
       date: '25 Oct 2023',
-      amount: '\$25.00',
+      amount: '₹250.00',
     ),
     _Transaction(
       title: 'Late Fee Payment',
       date: '15 Oct 2023',
-      amount: '\$10.00',
+      amount: '₹100.00',
     ),
     _Transaction(
       title: 'Clubhouse Booking',
       date: '05 Oct 2023',
-      amount: '\$50.00',
+      amount: '₹500.00',
     ),
     _Transaction(
       title: 'Previous Dues Credit',
       date: '02 Oct 2023',
-      amount: '\$30.00',
+      amount: '₹300.00',
       isDebit: false,
     ),
   ];
