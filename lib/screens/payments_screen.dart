@@ -1,84 +1,47 @@
 import 'package:flutter/material.dart';
+import 'monthly_maintenance_screen.dart';
 
-// A simple data model for a transaction with dummy data
-class _Transaction {
-  final String title;
-  final String date;
-  final String amount;
-  final bool isDebit;
-
-  const _Transaction({
-    required this.title,
-    required this.date,
-    required this.amount,
-    this.isDebit = true,
-  });
-}
-
-class PaymentsScreen extends StatefulWidget {
+class PaymentsScreen extends StatelessWidget {
+  static const String routeName = '/payments';
+  
   const PaymentsScreen({super.key});
 
-  @override
-  State<PaymentsScreen> createState() => _PaymentsScreenState();
-}
-
-class _PaymentsScreenState extends State<PaymentsScreen> {
-  // Dummy data for the transaction list
-  // This will be replaced with data from your mock API in a future step.
-  final List<_Transaction> _transactions = const [
-    _Transaction(
-      title: 'Monthly Maintenance',
-      date: '01 Nov 2023',
-      amount: '₹300.00',
-    ),
-    _Transaction(
-      title: 'Gym Access Fee',
-      date: '25 Oct 2023',
-      amount: '₹250.00',
-    ),
-    _Transaction(
-      title: 'Late Fee Payment',
-      date: '15 Oct 2023',
-      amount: '₹100.00',
-    ),
-    _Transaction(
-      title: 'Clubhouse Booking',
-      date: '05 Oct 2023',
-      amount: '₹500.00',
-    ),
-    _Transaction(
-      title: 'Previous Dues Credit',
-      date: '02 Oct 2023',
-      amount: '₹300.00',
-      isDebit: false,
-    ),
-  ];
+  // Helper to create styled navigation cards
+  Widget _buildPaymentCard({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String routeName,
+  }) {
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      child: ListTile(
+        leading: Icon(icon, size: 40, color: Theme.of(context).primaryColor),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.arrow_forward_ios),
+        onTap: () => Navigator.of(context).pushNamed(routeName),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: _transactions.length, // Use the state's list
-      itemBuilder: (context, index) {
-        final transaction = _transactions[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
-          child: ListTile(
-            leading: Icon(
-              transaction.isDebit ? Icons.arrow_upward : Icons.arrow_downward,
-              color: transaction.isDebit ? Colors.red : Colors.green,
-            ),
-            title: Text(transaction.title),
-            subtitle: Text(transaction.date),
-            trailing: Text(
-              '${transaction.isDebit ? '-' : '+'}${transaction.amount}',
-              style: TextStyle(
-                color: transaction.isDebit ? Colors.red : Colors.green,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        );
-      },
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: ListView(
+        children: [
+          _buildPaymentCard(
+              context: context,
+              icon: Icons.calendar_month,
+              title: 'Monthly Maintenance',
+              subtitle: 'View dues, payments, and fines',
+              routeName: MonthlyMaintenanceScreen.routeName),
+          // Other payment types like 'Gym Fees', 'Event Contributions' can be added here.
+        ],
+      ),
     );
   }
 }

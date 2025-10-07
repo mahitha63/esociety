@@ -4,6 +4,8 @@ import '../providers/auth_provider.dart';
 
 class SignupScreen extends StatefulWidget {
   static const String routeName = '/signup';
+
+  const SignupScreen({super.key});
   @override
   _SignupScreenState createState() => _SignupScreenState();
 }
@@ -46,17 +48,17 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
     return Scaffold(
-      appBar: AppBar(title: Text('Sign Up')),
+      appBar: AppBar(title: const Text('Sign Up')),
       body: Center(
         child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 36),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
           child: Card(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
             elevation: 6,
             child: Padding(
-              padding: EdgeInsets.all(18),
+              padding: const EdgeInsets.all(18),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -64,7 +66,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     TextFormField(
                       controller: _username,
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.person),
+                        prefixIcon: const Icon(Icons.person),
                         labelText: 'Username',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -78,12 +80,12 @@ class _SignupScreenState extends State<SignupScreen> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 14),
+                    const SizedBox(height: 14),
                     TextFormField(
                       controller: _password,
                       obscureText: true,
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.lock),
+                        prefixIcon: const Icon(Icons.lock),
                         labelText: 'Password',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -100,37 +102,38 @@ class _SignupScreenState extends State<SignupScreen> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 14),
+                    const SizedBox(height: 14),
                     TextFormField(
                       controller: _confirmPassword,
                       obscureText: true,
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.lock_outline),
+                        prefixIcon: const Icon(Icons.lock_outline),
                         labelText: 'Confirm Password',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                       validator: (v) {
-                        if (v != _password.text)
+                        if (v != _password.text) {
                           return 'Passwords do not match';
+                        }
                         return null;
                       },
                     ),
-                    SizedBox(height: 18),
+                    const SizedBox(height: 18),
                     auth.isLoading
-                        ? CircularProgressIndicator()
+                        ? const CircularProgressIndicator()
                         : SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: _submit,
                               style: ElevatedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
-                              child: Text(
+                              child: const Text(
                                 'Create Account',
                                 style: TextStyle(fontSize: 16),
                               ),

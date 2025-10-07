@@ -10,12 +10,14 @@ class AuthProvider extends ChangeNotifier {
   String? _username;
   String? _role;
   bool _isLoading = false;
+  bool _isInitializing = true;
 
   String? get token => _token;
   String? get username => _username;
   String? get role => _role;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _token != null && _token!.isNotEmpty;
+  bool get isInitializing => _isInitializing;
   bool get isAdmin => _role == 'admin';
 
   AuthProvider() {
@@ -23,12 +25,14 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> _loadToken() async {
+    _isInitializing = true;
     _token = await _secureStorage.read(key: 'auth_token');
     if (_token != null && _token!.isNotEmpty) {
       // If a token exists, we might also want to load user info
       _username = await _secureStorage.read(key: 'auth_username');
       _role = await _secureStorage.read(key: 'auth_role');
     }
+    _isInitializing = false;
     notifyListeners();
   }
 
@@ -52,8 +56,9 @@ class AuthProvider extends ChangeNotifier {
     if (response is Map<String, dynamic>) {
       // common key names: 'token' or 'accessToken'
       if (response.containsKey('token')) return response['token'].toString();
-      if (response.containsKey('accessToken'))
+      if (response.containsKey('accessToken')) {
         return response['accessToken'].toString();
+      }
       // fallback: if the map itself is the token string (rare)
       return response.toString();
     }

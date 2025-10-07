@@ -10,7 +10,7 @@ class AuthService {
     String username,
     String password,
   ) async {
-    await Future.delayed(Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 600));
 
     // Check for specific admin credentials
     if (username == 'admin' && password == 'Admin@123') {
@@ -31,7 +31,7 @@ class AuthService {
     String username,
     String password,
   ) async {
-    await Future.delayed(Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 600));
     return {
       'token': 'mock-token-${username.hashCode}',
       'user': {'id': 2, 'username': username, 'role': 'user'},
