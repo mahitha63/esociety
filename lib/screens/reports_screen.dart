@@ -8,6 +8,8 @@ import 'package:esociety/models/reports.dart';
 
 class ReportsScreen extends StatefulWidget {
   static const String routeName = '/reports';
+
+  const ReportsScreen({super.key});
   @override
   _ReportsScreenState createState() => _ReportsScreenState();
 }
@@ -72,8 +74,9 @@ class _ReportsScreenState extends State<ReportsScreen>
     return FutureBuilder<List<MonthlyReportEntry>>(
       future: _monthlyFuture,
       builder: (context, snap) {
-        if (snap.connectionState != ConnectionState.done)
-          return Center(child: CircularProgressIndicator());
+        if (snap.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
         if (snap.hasError) return _errorWidget(() => setState(_fetchAll));
         final months = snap.data!;
         // Line chart data
@@ -83,7 +86,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             .map((e) => FlSpot(e.key.toDouble(), e.value.amountPaid))
             .toList();
         return Padding(
-          padding: EdgeInsets.all(12),
+          padding: const EdgeInsets.all(12),
           child: Column(
             children: [
               SizedBox(
@@ -91,10 +94,10 @@ class _ReportsScreenState extends State<ReportsScreen>
                 child: LineChart(
                   LineChartData(
                     minY: 0,
-                    gridData: FlGridData(show: true),
+                    gridData: const FlGridData(show: true),
                     borderData: FlBorderData(show: true),
                     titlesData: FlTitlesData(
-                      leftTitles: AxisTitles(
+                      leftTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: true),
                       ),
                       bottomTitles: AxisTitles(
@@ -103,11 +106,12 @@ class _ReportsScreenState extends State<ReportsScreen>
                           interval: 1,
                           getTitlesWidget: (value, meta) {
                             final idx = value.toInt();
-                            if (idx < 0 || idx >= months.length)
+                            if (idx < 0 || idx >= months.length) {
                               return const SizedBox.shrink();
+                            }
                             return Text(
                               months[idx].month.substring(0, 3),
-                              style: TextStyle(fontSize: 10),
+                              style: const TextStyle(fontSize: 10),
                             );
                           },
                         ),
@@ -117,21 +121,21 @@ class _ReportsScreenState extends State<ReportsScreen>
                       LineChartBarData(
                         spots: spots,
                         isCurved: true,
-                        dotData: FlDotData(show: false),
+                        dotData: const FlDotData(show: false),
                       ),
                     ],
                   ),
                 ),
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Expanded(
                 child: ListView(
                   children: months
                       .map(
                         (m) => Card(
-                          margin: EdgeInsets.symmetric(vertical: 6),
+                          margin: const EdgeInsets.symmetric(vertical: 6),
                           child: ListTile(
-                            leading: Icon(Icons.calendar_month),
+                            leading: const Icon(Icons.calendar_month),
                             title: Text('${m.month} ${m.year}'),
                             subtitle: Text(
                               'Paid: ₹${m.amountPaid.toStringAsFixed(0)} • Pending: ₹${m.amountPending.toStringAsFixed(0)}',
@@ -153,24 +157,25 @@ class _ReportsScreenState extends State<ReportsScreen>
     return FutureBuilder<List<YearlyReportEntry>>(
       future: _yearlyFuture,
       builder: (context, snap) {
-        if (snap.connectionState != ConnectionState.done)
-          return Center(child: CircularProgressIndicator());
+        if (snap.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
         if (snap.hasError) return _errorWidget(() => setState(_fetchAll));
         final years = snap.data!;
         return Padding(
-          padding: EdgeInsets.all(12),
+          padding: const EdgeInsets.all(12),
           child: Column(
             children: [
               _summaryRow(years),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Expanded(
                 child: ListView(
                   children: years
                       .map(
                         (y) => Card(
-                          margin: EdgeInsets.symmetric(vertical: 6),
+                          margin: const EdgeInsets.symmetric(vertical: 6),
                           child: ListTile(
-                            leading: Icon(Icons.timeline),
+                            leading: const Icon(Icons.timeline),
                             title: Text('${y.year}'),
                             subtitle: Text(
                               'Collected: ₹${y.totalCollected.toStringAsFixed(0)} • Expense: ₹${y.totalExpense.toStringAsFixed(0)}',
@@ -192,8 +197,9 @@ class _ReportsScreenState extends State<ReportsScreen>
     return FutureBuilder<List<YoYEntry>>(
       future: _yoyFuture,
       builder: (context, snap) {
-        if (snap.connectionState != ConnectionState.done)
-          return Center(child: CircularProgressIndicator());
+        if (snap.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
         if (snap.hasError) return _errorWidget(() => setState(_fetchAll));
         final data = snap.data!;
         final maxAmount = data
@@ -209,7 +215,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         }).toList();
 
         return Padding(
-          padding: EdgeInsets.all(12),
+          padding: const EdgeInsets.all(12),
           child: Column(
             children: [
               SizedBox(
@@ -224,36 +230,37 @@ class _ReportsScreenState extends State<ReportsScreen>
                           showTitles: true,
                           getTitlesWidget: (value, meta) {
                             final idx = value.toInt();
-                            if (idx < 0 || idx >= data.length)
+                            if (idx < 0 || idx >= data.length) {
                               return const SizedBox.shrink();
+                            }
                             return Padding(
                               padding: const EdgeInsets.only(top: 6.0),
                               child: Text(
                                 '${data[idx].year}',
-                                style: TextStyle(fontSize: 12),
+                                style: const TextStyle(fontSize: 12),
                               ),
                             );
                           },
                         ),
                       ),
-                      leftTitles: AxisTitles(
+                      leftTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: true),
                       ),
                     ),
-                    gridData: FlGridData(show: true),
+                    gridData: const FlGridData(show: true),
                     borderData: FlBorderData(show: false),
                   ),
                 ),
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Expanded(
                 child: ListView(
                   children: data
                       .map(
                         (d) => Card(
-                          margin: EdgeInsets.symmetric(vertical: 6),
+                          margin: const EdgeInsets.symmetric(vertical: 6),
                           child: ListTile(
-                            leading: Icon(Icons.bar_chart),
+                            leading: const Icon(Icons.bar_chart),
                             title: Text('${d.year}'),
                             subtitle: Text(
                               'Amount: ₹${d.amount.toStringAsFixed(0)}',
@@ -276,9 +283,9 @@ class _ReportsScreenState extends State<ReportsScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Failed to load data', style: TextStyle(color: Colors.red)),
-          SizedBox(height: 8),
-          ElevatedButton(onPressed: retry, child: Text('Retry')),
+          const Text('Failed to load data', style: TextStyle(color: Colors.red)),
+          const SizedBox(height: 8),
+          ElevatedButton(onPressed: retry, child: const Text('Retry')),
         ],
       ),
     );
