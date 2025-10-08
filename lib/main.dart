@@ -10,6 +10,7 @@ import '../screens/payments_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/monthly_maintenance_screen.dart';
 import '../models/user_profile.dart';
+import '../screens/families_screen.dart'; // ✅ fixed path
 
 // --- DEVELOPMENT ---
 // Set to `true` to bypass login and go directly to the dashboard.
@@ -36,26 +37,21 @@ class MainApp extends StatelessWidget {
           title: 'eSociety',
           theme: ThemeData(primarySwatch: Colors.blue),
           home: auth.isInitializing
-              ? SplashScreen()
+              ? const SplashScreen()
               : _devBypassLogin || auth.isAuthenticated
-                  ? AppShell(
-                      // Pass user data from provider to the AppShell
-                      //username: auth.username ?? 'User',
-                      //role: auth.role ?? 'user',
-                      // --- DEV C: ROLE-BASED TESTING ---
-                      // When bypassing login, you can set the username and role here.
-                      // To test the ADMIN view, set role to 'admin'.
-                      // To test the USER view, set role to 'user' and username to 'patel', 'sharma', etc.
-                      username: _devBypassLogin
-                          ? 'patel' // e.g., 'patel', 'sharma', 'khan'
-                          : auth.username ?? 'User',
-                      role: _devBypassLogin ? 'user' : auth.role ?? 'user', // 'user' or 'admin'
-                    )
-                  : LoginScreen(),
+              ? AppShell(
+                  username: _devBypassLogin
+                      ? 'patel' // e.g., 'patel', 'sharma', 'khan'
+                      : auth.username ?? 'User',
+                  role: _devBypassLogin
+                      ? 'user'
+                      : auth.role ?? 'user', // 'user' or 'admin'
+                )
+              : const LoginScreen(),
           routes: {
-            LoginScreen.routeName: (_) => LoginScreen(),
-            SignupScreen.routeName: (_) => SignupScreen(),
-            ReportsScreen.routeName: (_) => ReportsScreen(),
+            LoginScreen.routeName: (_) => const LoginScreen(),
+            SignupScreen.routeName: (_) => const SignupScreen(),
+            ReportsScreen.routeName: (_) => const ReportsScreen(),
             MonthlyMaintenanceScreen.routeName: (_) =>
                 const MonthlyMaintenanceScreen(),
           },
@@ -125,14 +121,16 @@ class _AppShellState extends State<AppShell> {
         userProfile: _userProfile,
         onProfileUpdated: _updateProfile,
       ), //Index 2: Profile
+      const FamiliesScreen(), // Index 3: Families (for both user and admin)
       if (widget.role == 'admin')
-        ReportsScreen(), // Index 3: Reports (Admin only)
+        const ReportsScreen(), // Index 4: Reports (Admin only)
     ];
 
     final List<String> titles = <String>[
       'Dashboard',
       'Payments',
       'Profile',
+      'Families',
       if (widget.role == 'admin') 'Reports',
     ];
 
@@ -162,20 +160,39 @@ class _AppShellState extends State<AppShell> {
                         _userProfile.name.isNotEmpty
                             ? _userProfile.name[0].toUpperCase()
                             : 'U',
-                        style: TextStyle(fontSize: 40.0, color: Colors.blue[800]),
+                        style: TextStyle(
+                          fontSize: 40.0,
+                          color: Colors.blue[800],
+                        ),
                       ),
                     ),
                     decoration: BoxDecoration(color: Colors.blue[800]),
                   ),
-                  _buildDrawerItem(icon: Icons.home, title: 'Dashboard', index: 0),
-                  _buildDrawerItem(icon: Icons.payment, title: 'Payments', index: 1),
-                  _buildDrawerItem(icon: Icons.person, title: 'Profile', index: 2),
-                  // Conditionally show the Reports item in the drawer
+                  _buildDrawerItem(
+                    icon: Icons.home,
+                    title: 'Dashboard',
+                    index: 0,
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.payment,
+                    title: 'Payments',
+                    index: 1,
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.person,
+                    title: 'Profile',
+                    index: 2,
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.group,
+                    title: 'Families',
+                    index: 3,
+                  ),
                   if (widget.role == 'admin')
                     _buildDrawerItem(
                       icon: Icons.bar_chart,
                       title: 'Reports',
-                      index: 3,
+                      index: 4, // ✅ fixed index
                     ),
                   const Divider(),
                   ListTile(
@@ -183,19 +200,21 @@ class _AppShellState extends State<AppShell> {
                     title: const Text('Logout'),
                     onTap: () {
                       // Call the logout method from the provider
-                      Provider.of<AuthProvider>(context, listen: false).logout();
+                      Provider.of<AuthProvider>(
+                        context,
+                        listen: false,
+                      ).logout();
                     },
                   ),
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(
+                      'Version 1.0.0',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
                 ],
-              ),
-            ),
-            // This will now be at the bottom
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                'Version 1.0.0',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
               ),
             ),
           ],
@@ -205,9 +224,22 @@ class _AppShellState extends State<AppShell> {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed, // Good for 4+ items
         items: <BottomNavigationBarItem>[
-          const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Dashboard'),
-          const BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Payments'),
-          const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Dashboard',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.payment),
+            label: 'Payments',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.group),
+            label: 'Families',
+          ),
           if (widget.role == 'admin')
             const BottomNavigationBarItem(
               icon: Icon(Icons.bar_chart),
@@ -235,7 +267,10 @@ class _AppShellState extends State<AppShell> {
         borderRadius: BorderRadius.circular(8.0),
       ),
       child: ListTile(
-        leading: Icon(icon, color: isSelected ? Colors.blue[800] : Colors.grey[700]),
+        leading: Icon(
+          icon,
+          color: isSelected ? Colors.blue[800] : Colors.grey[700],
+        ),
         title: Text(
           title,
           style: TextStyle(
