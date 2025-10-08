@@ -13,7 +13,8 @@ class MonthlyMaintenanceScreen extends StatefulWidget {
   const MonthlyMaintenanceScreen({super.key});
 
   @override
-  State<MonthlyMaintenanceScreen> createState() => _MonthlyMaintenanceScreenState();
+  State<MonthlyMaintenanceScreen> createState() =>
+      _MonthlyMaintenanceScreenState();
 }
 
 class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
@@ -105,21 +106,30 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
       final daysUntilDue = record.dueDate.difference(now).inDays;
 
       if (record.status == PaymentStatus.late) {
-        newNotifications.add(model.AppNotification(
+        newNotifications.add(
+          model.AppNotification(
             title: 'Overdue Payment',
             body: '${record.familyName}\'s payment is overdue.',
             date: now,
             type: model.NotificationType.late,
             icon: Icons.error,
-            color: Colors.red));
-      } else if (record.status == PaymentStatus.due && daysUntilDue <= 7 && daysUntilDue >= 0) {
-        newNotifications.add(model.AppNotification(
+            color: Colors.red,
+          ),
+        );
+      } else if (record.status == PaymentStatus.due &&
+          daysUntilDue <= 7 &&
+          daysUntilDue >= 0) {
+        newNotifications.add(
+          model.AppNotification(
             title: 'Upcoming Due Date',
-            body: '${record.familyName}\'s payment is due in $daysUntilDue days.',
+            body:
+                '${record.familyName}\'s payment is due in $daysUntilDue days.',
             date: now,
             type: model.NotificationType.upcoming,
             icon: Icons.hourglass_top,
-            color: Colors.orange));
+            color: Colors.orange,
+          ),
+        );
       }
     }
 
@@ -173,7 +183,9 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
           const Text('Please check your connection and try again.'),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => _fetchData(Provider.of<AuthProvider>(context, listen: false).token),
+            onPressed: () => _fetchData(
+              Provider.of<AuthProvider>(context, listen: false).token,
+            ),
             icon: const Icon(Icons.refresh),
             label: const Text('Try Again'),
             style: ElevatedButton.styleFrom(
@@ -192,14 +204,18 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
       return r.status == _filterStatus;
     }).toList();
 
-    final defaulters = records.where((r) => r.status == PaymentStatus.late).toList();
+    final defaulters = records
+        .where((r) => r.status == PaymentStatus.late)
+        .toList();
 
     return Column(
       children: [
         _buildSummaryCard(defaulters),
         _buildFilterChips(),
         if (filteredRecords.isEmpty)
-          Expanded(child: _buildEmptyState(message: 'No records match your filter.'))
+          Expanded(
+            child: _buildEmptyState(message: 'No records match your filter.'),
+          )
         else
           Expanded(
             child: ListView.builder(
@@ -218,7 +234,10 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
     );
   }
 
-  Widget _buildUserView(List<MaintenanceRecord> allRecords, String? currentUsername) {
+  Widget _buildUserView(
+    List<MaintenanceRecord> allRecords,
+    String? currentUsername,
+  ) {
     // For the user view, we only care about their own records.
     // In a real app, the API would only return this user's data.
     // We simulate this by filtering based on the username from AuthProvider.
@@ -227,7 +246,9 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
     final userRecords = allRecords.where((r) {
       if (currentUsername == null) return false;
       // Simple matching logic. e.g., username 'sharma' matches 'Sharma Family'
-      return r.familyName.toLowerCase().startsWith(currentUsername.toLowerCase());
+      return r.familyName.toLowerCase().startsWith(
+        currentUsername.toLowerCase(),
+      );
     }).toList();
 
     if (userRecords.isEmpty) {
@@ -247,9 +268,7 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const Divider(),
-        ...userRecords
-            .map((record) => _buildUserHistoryTile(record))
-            .toList(),
+        ...userRecords.map((record) => _buildUserHistoryTile(record)).toList(),
       ],
     );
   }
@@ -270,17 +289,26 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
         subtitle = 'Thank you for your timely payment.';
         amountWidget = Text(
           currencyFormat.format(record.amount),
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color),
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
         );
         break;
       case PaymentStatus.due:
         icon = Icons.hourglass_top;
         color = Colors.orange;
         title = 'Payment Due';
-        subtitle = 'Your maintenance is due by ${DateFormat.yMMMd().format(record.dueDate)}.';
+        subtitle =
+            'Your maintenance is due by ${DateFormat.yMMMd().format(record.dueDate)}.';
         amountWidget = Text(
           currencyFormat.format(record.amount),
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color),
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
         );
         break;
       case PaymentStatus.late:
@@ -288,10 +316,15 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
         color = Colors.red;
         title = 'Payment Overdue';
         final total = record.amount + (record.fine ?? 0);
-        subtitle = 'A fine of ${currencyFormat.format(record.fine)} has been applied.';
+        subtitle =
+            'A fine of ${currencyFormat.format(record.fine)} has been applied.';
         amountWidget = Text(
           currencyFormat.format(total),
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color),
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
         );
         break;
     }
@@ -309,15 +342,21 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
           children: [
             Icon(icon, color: color, size: 40),
             const SizedBox(height: 8),
-            Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 4),
             amountWidget,
             const SizedBox(height: 8),
-            Text(subtitle, style: const TextStyle(fontSize: 14, color: Colors.black54)),
+            Text(
+              subtitle,
+              style: const TextStyle(fontSize: 14, color: Colors.black54),
+            ),
             if (record.status != PaymentStatus.paid) ...[
               const SizedBox(height: 16),
               ElevatedButton(onPressed: () {}, child: const Text('Pay Now')),
-            ]
+            ],
           ],
         ),
       ),
@@ -338,13 +377,15 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
           FilterChip(
             label: const Text('Due'),
             selected: _filterStatus == PaymentStatus.due,
-            onSelected: (selected) => setState(() => _filterStatus = PaymentStatus.due),
+            onSelected: (selected) =>
+                setState(() => _filterStatus = PaymentStatus.due),
             selectedColor: Colors.orange[100],
           ),
           FilterChip(
             label: const Text('Late'),
             selected: _filterStatus == PaymentStatus.late,
-            onSelected: (selected) => setState(() => _filterStatus = PaymentStatus.late),
+            onSelected: (selected) =>
+                setState(() => _filterStatus = PaymentStatus.late),
             selectedColor: Colors.red[100],
           ),
         ],
@@ -360,16 +401,20 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
         margin: const EdgeInsets.all(12),
         child: const ListTile(
           leading: Icon(Icons.check_circle, color: Colors.green, size: 36),
-          title: Text('All Caught Up!',
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(
+            'All Caught Up!',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           subtitle: Text('Everyone has paid their maintenance fees.'),
         ),
       );
     }
 
     // "Action Required" summary card
-    final totalDue =
-        defaulters.fold<double>(0, (sum, item) => sum + item.amount + (item.fine ?? 0));
+    final totalDue = defaulters.fold<double>(
+      0,
+      (sum, item) => sum + item.amount + (item.fine ?? 0),
+    );
     return InkWell(
       onTap: () {
         setState(() {
@@ -381,10 +426,13 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
         margin: const EdgeInsets.all(12),
         child: ListTile(
           leading: const Icon(Icons.warning, color: Colors.red, size: 36),
-          title: Text('Action Required: ${defaulters.length} Defaulters',
-              style: const TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(
+            'Action Required: ${defaulters.length} Defaulters',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           subtitle: Text(
-              'Total amount overdue: ${NumberFormat.currency(locale: 'en_IN', symbol: '₹').format(totalDue)}'),
+            'Total amount overdue: ${NumberFormat.currency(locale: 'en_IN', symbol: '₹').format(totalDue)}',
+          ),
           trailing: const Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -416,11 +464,17 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
       elevation: 1,
       child: ListTile(
         leading: const Icon(Icons.check_circle, color: Colors.green),
-        title: Text('${record.familyName} (${record.flatNumber})',
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text('Paid on ${DateFormat.yMMMd().format(record.paymentDate!)}'),
-        trailing: Text(currencyFormat.format(record.amount),
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text(
+          '${record.familyName} (${record.flatNumber})',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(
+          'Paid on ${DateFormat.yMMMd().format(record.paymentDate!)}',
+        ),
+        trailing: Text(
+          currencyFormat.format(record.amount),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
       ),
     );
   }
@@ -433,11 +487,15 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
       elevation: 1,
       child: ListTile(
         leading: const Icon(Icons.hourglass_top, color: Colors.orange),
-        title: Text('${record.familyName} (${record.flatNumber})',
-            style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          '${record.familyName} (${record.flatNumber})',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         subtitle: Text('Due by ${DateFormat.yMMMd().format(record.dueDate)}'),
-        trailing: Text(currencyFormat.format(record.amount),
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        trailing: Text(
+          currencyFormat.format(record.amount),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
       ),
     );
   }
@@ -460,19 +518,30 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
           children: [
             ListTile(
               leading: const Icon(Icons.error, color: Colors.red),
-              title: Text('${record.familyName} (${record.flatNumber})',
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text('Overdue since ${DateFormat.yMMMd().format(record.dueDate)}'),
+              title: Text(
+                '${record.familyName} (${record.flatNumber})',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                'Overdue since ${DateFormat.yMMMd().format(record.dueDate)}',
+              ),
               trailing: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(currencyFormat.format(total),
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16, color: Colors.red)),
+                  Text(
+                    currencyFormat.format(total),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.red,
+                    ),
+                  ),
                   if (record.fine != null && record.fine! > 0)
-                    Text('+ ${currencyFormat.format(record.fine)} fine',
-                        style: const TextStyle(fontSize: 12, color: Colors.red)),
+                    Text(
+                      '+ ${currencyFormat.format(record.fine)} fine',
+                      style: const TextStyle(fontSize: 12, color: Colors.red),
+                    ),
                 ],
               ),
             ),
@@ -482,7 +551,7 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
                 padding: const EdgeInsets.only(right: 16.0, bottom: 4.0),
                 child: _buildSendReminderButton(record),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -503,13 +572,17 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
         setState(() {
           _sendingReminders.add(record.familyName);
         });
-        final success = await api.ApiService.sendReminderMock(record.familyName);
+        final success = await api.ApiService.sendReminderMock(
+          record.familyName,
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(success
-                  ? 'Reminder sent to ${record.familyName}'
-                  : 'Failed to send reminder.'),
+              content: Text(
+                success
+                    ? 'Reminder sent to ${record.familyName}'
+                    : 'Failed to send reminder.',
+              ),
               backgroundColor: success ? Colors.green : Colors.red,
             ),
           );
@@ -518,7 +591,9 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
       },
       icon: const Icon(Icons.send, size: 16),
       label: const Text('Send Reminder'),
-      style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12)),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+      ),
     );
   }
 
@@ -531,10 +606,7 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
       builder: (context, value, builderChild) {
         return Transform.translate(
           offset: Offset(0, 50 * (1 - value)),
-          child: Opacity(
-            opacity: value,
-            child: builderChild,
-          ),
+          child: Opacity(opacity: value, child: builderChild),
         );
       },
       child: child,
@@ -563,8 +635,13 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
 
     return ListTile(
       leading: icon,
-      title: Text('Maintenance for ${DateFormat('MMMM yyyy').format(record.dueDate)}'),
-      trailing: Text(currencyFormat.format(record.amount), style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+      title: Text(
+        'Maintenance for ${DateFormat('MMMM yyyy').format(record.dueDate)}',
+      ),
+      trailing: Text(
+        currencyFormat.format(record.amount),
+        style: TextStyle(color: color, fontWeight: FontWeight.bold),
+      ),
     );
   }
 
@@ -573,11 +650,7 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search_off,
-            size: 80,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.search_off, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             message,
