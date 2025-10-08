@@ -19,10 +19,31 @@ class FamilyProvider with ChangeNotifier {
     }
   }
 
+  // Helper to check if a user has a pending submission
+  Map<String, dynamic>? getPendingSubmissionForUser(String username) {
+    try {
+      // Find any submission (pending or rejected) that isn't approved yet.
+      return _pendingApproval.firstWhere(
+        (p) => p['submittedBy'] == username,
+      );
+    } catch (e) {
+      return null; // No pending submission found
+    }
+  }
+
+  // Helper to check if a user has an approved family
+  bool hasApprovedFamily(String username) {
+    // This logic assumes the family name is tied to the username.
+    // A more robust implementation would use a dedicated 'ownerId' field.
+    return _families
+        .any((f) => (f['name'] as String).toLowerCase().contains(username));
+  }
+
   Future<void> addFamily(Map<String, dynamic> familyData) async {
     try {
       // Maker adds → goes to pending approval
-      _pendingApproval.add(familyData);
+      // Add a 'status' field to track the state.
+      _pendingApproval.add({...familyData, 'status': 'pending'});
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -35,8 +56,20 @@ class FamilyProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void rejectFamily(int index) {
-    _pendingApproval.removeAt(index);
+  void rejectFamily(String id, String reason) {
+    final index = _pendingApproval.indexWhere((p) => p['id'] == id);
+    if (index != -1) {
+      _pendingApproval[index]['status'] = 'rejected';
+      _pendingApproval[index]['rejectionReason'] = reason;
+      notifyListeners();
+    }
+  }
+
+  /// Allows a user to clear their rejected submission to try again.
+  void clearRejectedSubmission(String username) {
+    _pendingApproval.removeWhere(
+      (p) => p['submittedBy'] == username && p['status'] == 'rejected',
+    );
     notifyListeners();
   }
 

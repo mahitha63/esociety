@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../providers/maintenance_provider.dart';
 
 class DashboardScreen extends StatelessWidget {
   // Callback to allow this screen to trigger navigation in the parent AppShell
@@ -8,6 +11,7 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currencyFormat = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
     // We use a ListView to ensure the content is scrollable if it
     // overflows on smaller screens.
     return ListView(
@@ -26,25 +30,40 @@ class DashboardScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Total Outstanding Dues',
-                  style: TextStyle(fontSize: 16, color: Colors.black54),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  '₹250.75',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Navigate to the Payments screen (index 1)
-                      onNavigate(1);
-                    },
-                    child: const Text('Pay Now'),
-                  ),
+                Consumer<MaintenanceProvider>(
+                  builder: (context, maintenance, child) {
+                    if (maintenance.isLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    final dueAmount = maintenance.upcomingDueAmount;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          dueAmount > 0 ? 'Upcoming Dues' : 'Account Status',
+                          style: const TextStyle(fontSize: 16, color: Colors.black54),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          dueAmount > 0 ? currencyFormat.format(dueAmount) : 'All Clear!',
+                          style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: dueAmount > 0 ? Colors.redAccent : Colors.green),
+                        ),
+                        if (dueAmount > 0) ...[
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: ElevatedButton(
+                                onPressed: () => onNavigate(1), child: const Text('Pay Now')),
+                          ),
+                        ]
+                      ],
+                    );
+                  },
                 ),
               ],
             ),

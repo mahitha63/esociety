@@ -1,147 +1,151 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import 'login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
-  static const String routeName = '/signup';
-
+  static const routeName = '/signup';
   const SignupScreen({super.key});
+
   @override
-  _SignupScreenState createState() => _SignupScreenState();
+  State<SignupScreen> createState() => _SignupScreenState();
 }
 
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _username = TextEditingController();
-  final _password = TextEditingController();
-  final _confirmPassword = TextEditingController();
+  final _passwordController = TextEditingController();
+  var _isLoading = false;
 
-  final usernameRegex = RegExp(r'^[a-zA-Z][a-zA-Z0-9_]{2,19}$');
-  final passwordRegex = RegExp(
-    r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#\$&*~]).{8,}$',
-  );
-  final disallowedPasswords = [
-    'password',
-    '123456',
-    '12345678',
-    'qwerty',
-    'letmein',
-    'admin',
-    'welcome',
-  ];
+  final Map<String, String> _authData = {
+    'username': '',
+    'password': '',
+  };
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter a password.';
+    }
+    if (value.length < 8) {
+      return 'Password must be at least 8 characters long.';
+    }
+    if (!value.contains(RegExp(r'[A-Z]'))) {
+      return '• Must contain at least one uppercase letter.';
+    }
+    if (!value.contains(RegExp(r'[a-z]'))) {
+      return '• Must contain at least one lowercase letter.';
+    }
+    if (!value.contains(RegExp(r'[0-9]'))) {
+      return '• Must contain at least one number.';
+    }
+    if (!value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+      return '• Must contain at least one special character.';
+    }
+    return null;
+  }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    try {
-      await auth.signup(_username.text.trim(), _password.text);
-      // No navigation needed here. The Consumer in main.dart will
-      // automatically navigate to the AppShell when the state changes.
-      // Navigator.pushReplacementNamed(context, ReportsScreen.routeName);
-    } catch (e) {
-      final msg = e.toString().replaceFirst('Exception: ', '');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    if (!_formKey.currentState!.validate()) {
+      return; // Invalid!
+    }
+    _formKey.currentState!.save();
+    setState(() {
+      _isLoading = true;
+    });
+
+    // In a real app, you would call your AuthProvider's signup method.
+    // For this example, we'll simulate a network call.
+    await Future.delayed(const Duration(seconds: 2));
+
+    // After successful signup, you might want to log the user in
+    // or navigate them to the login screen.
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Signup successful! Please log in.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.of(context).pushReplacementNamed(LoginScreen.routeName);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final auth = Provider.of<AuthProvider>(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign Up')),
+      appBar: AppBar(
+        title: const Text('Create Account'),
+        backgroundColor: Colors.blue[800],
+      ),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
-          child: Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-            elevation: 6,
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _username,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.person),
-                        labelText: 'Username',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      validator: (v) {
-                        if (v == null || v.isEmpty) return 'Enter username';
-                        if (!usernameRegex.hasMatch(v)) {
-                          return '3–20 chars, start with letter, only letters/numbers/_';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 14),
-                    TextFormField(
-                      controller: _password,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.lock),
-                        labelText: 'Password',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      validator: (v) {
-                        if (v == null || v.isEmpty) return 'Enter password';
-                        if (disallowedPasswords.contains(v.toLowerCase())) {
-                          return 'This password is too common';
-                        }
-                        if (!passwordRegex.hasMatch(v)) {
-                          return 'Min 8 chars, 1 upper, 1 lower, 1 digit, 1 special char';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 14),
-                    TextFormField(
-                      controller: _confirmPassword,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        labelText: 'Confirm Password',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      validator: (v) {
-                        if (v != _password.text) {
-                          return 'Passwords do not match';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 18),
-                    auth.isLoading
-                        ? const CircularProgressIndicator()
-                        : SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _submit,
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: const Text(
-                                'Create Account',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            ),
-                          ),
-                  ],
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextFormField(
+                  decoration: const InputDecoration(labelText: 'Username'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a username.';
+                    }
+                    return null;
+                  },
+                  onSaved: (value) {
+                    _authData['username'] = value!;
+                  },
                 ),
-              ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(labelText: 'Password'),
+                  obscureText: true,
+                  validator: _validatePassword,
+                  onSaved: (value) {
+                    _authData['password'] = value!;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  decoration:
+                      const InputDecoration(labelText: 'Confirm Password'),
+                  obscureText: true,
+                  validator: (value) {
+                    if (value != _passwordController.text) {
+                      return 'Passwords do not match!';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 32),
+                if (_isLoading)
+                  const CircularProgressIndicator()
+                else
+                  ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    child: const Text('Sign Up'),
+                  ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context)
+                        .pushReplacementNamed(LoginScreen.routeName);
+                  },
+                  child: const Text('Already have an account? Log In'),
+                ),
+              ],
             ),
           ),
         ),
