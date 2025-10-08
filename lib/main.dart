@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/family_provider.dart'; // Import FamilyProvider
 import '../screens/splash_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/signup_screen.dart';
@@ -19,7 +20,12 @@ const bool _devBypassLogin = false;
 void main() {
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(
+          create: (_) => FamilyProvider(),
+        ), // Provide FamilyProvider here
+      ],
       child: const MainApp(),
     ),
   );
@@ -54,6 +60,8 @@ class MainApp extends StatelessWidget {
             ReportsScreen.routeName: (_) => const ReportsScreen(),
             MonthlyMaintenanceScreen.routeName: (_) =>
                 const MonthlyMaintenanceScreen(),
+            FamiliesScreen.routeName: (_) =>
+                const FamiliesScreen(), // Add FamiliesScreen route
           },
         );
       },
