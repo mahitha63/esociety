@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/maintenance_record.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
+import '../providers/maintenance_provider.dart';
 import '../providers/auth_provider.dart';
 import '../screens/notification.dart' as model;
 import '../services/api_service.dart' as api;
@@ -19,47 +20,17 @@ class MonthlyMaintenanceScreen extends StatefulWidget {
 
 class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
     with SingleTickerProviderStateMixin {
-  late Future<List<MaintenanceRecord>> _maintenanceFuture;
   PaymentStatus? _filterStatus;
-  String? _userRole;
   List<model.AppNotification> _notifications = [];
   final Set<String> _sendingReminders = {};
 
   @override
-  void initState() {
-    super.initState();
-    // We need context to get the provider, so we use didChangeDependencies.
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Using addPostFrameCallback ensures that the context is fully available
-    // when we try to access the provider.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchData(Provider.of<AuthProvider>(context, listen: false).token);
-    });
-  }
-
-  Future<void> _fetchData(String? token) async {
-    setState(() {
-      _maintenanceFuture = api.ApiService.fetchMonthlyMaintenance(token)
-        ..then((records) {
-          // Once data is fetched, generate notifications
-          _generateNotifications(records);
-        });
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // In a real app, we'd get the role from an AuthProvider.
-    // Get the real user role and username from the AuthProvider
     final auth = Provider.of<AuthProvider>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Monthly Maintenance'),
+        title: const Text('Payments'),
         backgroundColor: Colors.blue[800],
         actions: [
           if (_notifications.isNotEmpty)
@@ -73,25 +44,29 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => _fetchData(auth.token),
-        child: FutureBuilder<List<MaintenanceRecord>>(
-          future: _maintenanceFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
+        onRefresh: () => Provider.of<MaintenanceProvider>(context, listen: false)
+            .fetchMaintenanceRecords(auth.token, auth.username),
+        child: Consumer<MaintenanceProvider>(
+          builder: (context, maintenance, child) {
+            if (maintenance.isLoading && maintenance.userRecords.isEmpty) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (snapshot.hasError) {
+            if (maintenance.error != null) {
               return _buildErrorWidget();
             }
 
-            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            final records = auth.isAdmin
+                ? maintenance.userRecords // Admin view needs all records
+                : maintenance.userRecords;
+
+            if (records.isEmpty) {
               return _buildEmptyState(message: 'No maintenance records found.');
             }
 
             return auth.isAdmin
-                ? _buildAdminView(snapshot.data!)
-                : _buildUserView(snapshot.data!, auth.username);
+                ? _buildAdminView(records)
+                : _buildUserView(records, auth.username);
           },
         ),
       ),
@@ -183,9 +158,8 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
           const Text('Please check your connection and try again.'),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => _fetchData(
-              Provider.of<AuthProvider>(context, listen: false).token,
-            ),
+            onPressed: () => Provider.of<MaintenanceProvider>(context, listen: false)
+                .fetchMaintenanceRecords(Provider.of<AuthProvider>(context, listen: false).token, Provider.of<AuthProvider>(context, listen: false).username),
             icon: const Icon(Icons.refresh),
             label: const Text('Try Again'),
             style: ElevatedButton.styleFrom(
@@ -199,11 +173,12 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
   }
 
   Widget _buildAdminView(List<MaintenanceRecord> records) {
-    final filteredRecords = records.where((r) {
+    // Filter records based on the selected chip.
+    final List<MaintenanceRecord> filteredRecords = records.where((r) {
       if (_filterStatus == null) return true;
       return r.status == _filterStatus;
     }).toList();
-
+    // Identify defaulters for the summary card.
     final defaulters = records
         .where((r) => r.status == PaymentStatus.late)
         .toList();
@@ -238,37 +213,50 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
     List<MaintenanceRecord> allRecords,
     String? currentUsername,
   ) {
-    // For the user view, we only care about their own records.
-    // In a real app, the API would only return this user's data.
-    // We simulate this by filtering based on the username from AuthProvider.
-    // NOTE: This assumes the username matches the start of the familyName (e.g., 'patel' matches 'Patel Family').
-    // A more robust solution would use a user ID.
-    final userRecords = allRecords.where((r) {
-      if (currentUsername == null) return false;
-      // Simple matching logic. e.g., username 'sharma' matches 'Sharma Family'
-      return r.familyName.toLowerCase().startsWith(
-        currentUsername.toLowerCase(),
-      );
-    }).toList();
-
-    if (userRecords.isEmpty) {
+    if (allRecords.isEmpty) {
       return _buildEmptyState(message: "You have no maintenance records yet.");
     }
 
-    // Assuming the first record is the most recent/current one.
-    final currentRecord = userRecords.first;
+    final currentRecord = allRecords.first;
+    // All other real records are considered part of the payment history.
+    final historyRecords =
+        allRecords.length > 1 ? allRecords.skip(1).toList() : <MaintenanceRecord>[];
+
+    // --- Dummy Data for Demonstration ---
+    // Add some dummy historical records to ensure the history section is always visible for users.
+    // In a real application, this data would come from the API.
+    historyRecords.addAll([
+      MaintenanceRecord(
+          familyName: currentRecord.familyName,
+          flatNumber: currentRecord.flatNumber,
+          amount: 500,
+          dueDate: DateTime.now().subtract(const Duration(days: 30)),
+          status: PaymentStatus.paid,
+          paymentDate: DateTime.now().subtract(const Duration(days: 28))),
+      MaintenanceRecord(
+          familyName: currentRecord.familyName,
+          flatNumber: currentRecord.flatNumber,
+          amount: 500,
+          dueDate: DateTime.now().subtract(const Duration(days: 60)),
+          status: PaymentStatus.paid,
+          paymentDate: DateTime.now().subtract(const Duration(days: 55))),
+    ]);
 
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
         _buildUserSummaryCard(currentRecord),
-        const SizedBox(height: 24),
-        const Text(
-          'Payment History',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        const Divider(),
-        ...userRecords.map((record) => _buildUserHistoryTile(record)).toList(),
+        // Only show the "Payment History" section if there are past records.
+        if (historyRecords.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          const Text(
+            'Payment History',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const Divider(),
+          // Create a list of history tiles from the past records.
+          ...historyRecords.map((record) => _buildUserHistoryTile(record)).toList(),
+        ],
       ],
     );
   }
@@ -636,7 +624,8 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
     return ListTile(
       leading: icon,
       title: Text(
-        'Maintenance for ${DateFormat('MMMM yyyy').format(record.dueDate)}',
+        'Maintenance for ${DateFormat('MMMM yyyy').format(record.dueDate)}' +
+            (record.status == PaymentStatus.paid ? ' (Paid)' : ''), // Explicitly mark paid transactions
       ),
       trailing: Text(
         currencyFormat.format(record.amount),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/family_provider.dart'; // Import FamilyProvider
+import '../providers/maintenance_provider.dart'; // Import MaintenanceProvider
 import '../screens/splash_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/signup_screen.dart';
@@ -25,6 +26,9 @@ void main() {
         ChangeNotifierProvider(
           create: (_) => FamilyProvider(),
         ), // Provide FamilyProvider here
+        ChangeNotifierProvider(
+          create: (_) => MaintenanceProvider(),
+        ),
       ],
       child: const MainApp(),
     ),
@@ -116,6 +120,11 @@ class _AppShellState extends State<AppShell> {
       phone: _userProfile.phone,
       societyNumber: _userProfile.societyNumber,
     );
+
+    // Fetch maintenance data once when the shell is initialized.
+    Provider.of<MaintenanceProvider>(context, listen: false).fetchMaintenanceRecords(
+      Provider.of<AuthProvider>(context, listen: false).token,
+      widget.username);
   }
 
   @override
@@ -123,23 +132,23 @@ class _AppShellState extends State<AppShell> {
     // List of widgets to call in the body. We pass the navigation function
     // to the DashboardScreen so it can switch tabs.
     final List<Widget> widgetOptions = <Widget>[
-      DashboardScreen(onNavigate: _onItemTapped), //Index 0 : Dashboard
-      const PaymentsScreen(), //Index 1: Payments
+      DashboardScreen(onNavigate: _onItemTapped), // Index 0: Dashboard
+      const PaymentsScreen(), // Index 1: Payments
+      const FamiliesScreen(), // Index 2: Families
+      if (widget.role == 'admin')
+        const ReportsScreen(), // Index 3: Reports (Admin only)
       ProfileScreen(
         userProfile: _userProfile,
         onProfileUpdated: _updateProfile,
-      ), //Index 2: Profile
-      const FamiliesScreen(), // Index 3: Families (for both user and admin)
-      if (widget.role == 'admin')
-        const ReportsScreen(), // Index 4: Reports (Admin only)
+      ), // Index 4: Profile
     ];
 
     final List<String> titles = <String>[
       'Dashboard',
       'Payments',
-      'Profile',
       'Families',
       if (widget.role == 'admin') 'Reports',
+      'Profile'
     ];
 
     return Scaffold(
@@ -187,20 +196,20 @@ class _AppShellState extends State<AppShell> {
                     index: 1,
                   ),
                   _buildDrawerItem(
-                    icon: Icons.person,
-                    title: 'Profile',
-                    index: 2,
-                  ),
-                  _buildDrawerItem(
                     icon: Icons.group,
                     title: 'Families',
-                    index: 3,
+                    index: 2,
                   ),
                   if (widget.role == 'admin')
                     _buildDrawerItem(
                       icon: Icons.bar_chart,
                       title: 'Reports',
-                      index: 4, // ✅ fixed index
+                      index: 3,
+                    ),
+                  _buildDrawerItem(
+                    icon: Icons.person,
+                    title: 'Profile',
+                    index: widget.role == 'admin' ? 4 : 3,
                     ),
                   const Divider(),
                   ListTile(
@@ -241,10 +250,6 @@ class _AppShellState extends State<AppShell> {
             label: 'Payments',
           ),
           const BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-          const BottomNavigationBarItem(
             icon: Icon(Icons.group),
             label: 'Families',
           ),
@@ -253,8 +258,12 @@ class _AppShellState extends State<AppShell> {
               icon: Icon(Icons.bar_chart),
               label: 'Reports',
             ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
         ],
-        currentIndex: _selectedIndex,
+        currentIndex: _selectedIndex > titles.length - 1 ? 0 : _selectedIndex,
         onTap: _onItemTapped,
       ),
     );
