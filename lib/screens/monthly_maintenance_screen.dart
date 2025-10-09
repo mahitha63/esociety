@@ -23,6 +23,7 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
   PaymentStatus? _filterStatus;
   List<model.AppNotification> _notifications = [];
   final Set<String> _sendingReminders = {};
+  bool _isPaying = false; // State to track payment processing
 
   @override
   Widget build(BuildContext context) {
@@ -56,16 +57,15 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
               return _buildErrorWidget();
             }
 
-            final records = auth.isAdmin
-                ? maintenance.userRecords // Admin view needs all records
-                : maintenance.userRecords;
-
+            final records = maintenance.userRecords;
             if (records.isEmpty) {
+              // If the API returns nothing, show the empty state.
               return _buildEmptyState(message: 'No maintenance records found.');
             }
 
+            // Admin sees all records, user sees only their own.
             return auth.isAdmin
-                ? _buildAdminView(records)
+                ? _buildAdminView(records) // Admin sees all dummy records
                 : _buildUserView(records, auth.username);
           },
         ),
@@ -213,34 +213,24 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
     List<MaintenanceRecord> allRecords,
     String? currentUsername,
   ) {
-    if (allRecords.isEmpty) {
+    // Find records for the current user.
+    final userSpecificRecords = allRecords
+        .where((r) => r.familyName.toLowerCase() == currentUsername?.toLowerCase())
+        .toList();
+
+    // Sort records by due date, newest first, to ensure the most recent one is the 'current' record.
+    userSpecificRecords.sort((a, b) => b.dueDate.compareTo(a.dueDate));
+
+    if (userSpecificRecords.isEmpty) {
       return _buildEmptyState(message: "You have no maintenance records yet.");
     }
 
-    final currentRecord = allRecords.first;
+    // The first record is the most current one for the user.
+    final currentRecord = userSpecificRecords.first;
     // All other real records are considered part of the payment history.
-    final historyRecords =
-        allRecords.length > 1 ? allRecords.skip(1).toList() : <MaintenanceRecord>[];
-
-    // --- Dummy Data for Demonstration ---
-    // Add some dummy historical records to ensure the history section is always visible for users.
-    // In a real application, this data would come from the API.
-    historyRecords.addAll([
-      MaintenanceRecord(
-          familyName: currentRecord.familyName,
-          flatNumber: currentRecord.flatNumber,
-          amount: 500,
-          dueDate: DateTime.now().subtract(const Duration(days: 30)),
-          status: PaymentStatus.paid,
-          paymentDate: DateTime.now().subtract(const Duration(days: 28))),
-      MaintenanceRecord(
-          familyName: currentRecord.familyName,
-          flatNumber: currentRecord.flatNumber,
-          amount: 500,
-          dueDate: DateTime.now().subtract(const Duration(days: 60)),
-          status: PaymentStatus.paid,
-          paymentDate: DateTime.now().subtract(const Duration(days: 55))),
-    ]);
+    final historyRecords = userSpecificRecords.length > 1
+        ? userSpecificRecords.skip(1).toList()
+        : <MaintenanceRecord>[];
 
     return ListView(
       padding: const EdgeInsets.all(16.0),
@@ -343,7 +333,29 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
             ),
             if (record.status != PaymentStatus.paid) ...[
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: () {}, child: const Text('Pay Now')),
+              _isPaying
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton(
+                      onPressed: () async {
+                        setState(() => _isPaying = true);
+                        await Provider.of<MaintenanceProvider>(context,
+                                listen: false)
+                            .makePayment(record.familyName);
+
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Payment Successful!'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                          setState(() => _isPaying = false);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 40, vertical: 12)),
+                      child: const Text('Pay Now')),
             ],
           ],
         ),

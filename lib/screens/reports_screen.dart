@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:esociety/providers/auth_provider.dart';
-import 'package:esociety/services/api_service.dart' as api;
-import 'package:esociety/widgets/dashboard_card.dart' as widgets;
-import 'package:esociety/models/reports.dart';
+import 'package:intl/intl.dart';
+import '../widgets/dashboard_card.dart' as widgets;
+import '../models/reports.dart';
+import '../providers/auth_provider.dart';
+import '../providers/maintenance_provider.dart';
+import '../providers/expense_provider.dart';
 
 class ReportsScreen extends StatefulWidget {
   static const String routeName = '/reports';
@@ -17,29 +19,48 @@ class ReportsScreen extends StatefulWidget {
 class _ReportsScreenState extends State<ReportsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late Future<List<MonthlyReportEntry>> _monthlyFuture;
+
+  final List<YearlyReportEntry> _dummyYearlyData = [
+    YearlyReportEntry(
+      year: DateTime.now().year,
+      totalCollected: 25000, // Dummy yearly total
+      totalExpense: 18000,
+    ),
+    YearlyReportEntry(
+      year: DateTime.now().year - 1,
+      totalCollected: 22000,
+      totalExpense: 17500,
+    ),
+  ];
+
+  final List<YoYEntry> _dummyYoYData = [
+    YoYEntry(year: DateTime.now().year - 2, amount: 20000),
+    YoYEntry(year: DateTime.now().year - 1, amount: 22000),
+    YoYEntry(year: DateTime.now().year, amount: 25000),
+  ];
+
+  // Futures that resolve immediately with our dummy data.
   late Future<List<YearlyReportEntry>> _yearlyFuture;
   late Future<List<YoYEntry>> _yoyFuture;
 
   @override
   void initState() {
     super.initState();
+    // The number of tabs is now 3 (Yearly, YoY, Expenses)
     _tabController = TabController(length: 3, vsync: this);
-    _fetchAll();
+    _yearlyFuture = Future.value(_dummyYearlyData);
+    _yoyFuture = Future.value(_dummyYoYData);
   }
 
-  void _fetchAll() {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final token = auth.token;
-    _monthlyFuture = api.ApiService.fetchMonthlyReport(token);
-    _yearlyFuture = api.ApiService.fetchYearlyReport(token);
-    _yoyFuture = api.ApiService.fetchYoYComparison(token);
-  }
-
-  Widget _summaryRow(List<YearlyReportEntry> years) {
+  Widget _summaryRow(BuildContext context, List<YearlyReportEntry> years) {
     double collected = years.fold(0.0, (s, y) => s + y.totalCollected);
     double expense = years.fold(0.0, (s, y) => s + y.totalExpense);
-    double pending = (collected - expense).abs(); // demo metric
+
+    // Dynamically calculate pending amount from the MaintenanceProvider
+    final maintenance = Provider.of<MaintenanceProvider>(context, listen: false);
+    final pending = maintenance.userRecords
+        .where((r) => r.status == 'late' || r.status == 'due')
+        .fold(0.0, (sum, r) => sum + r.amount + (r.fine ?? 0));
 
     return Row(
       children: [
@@ -70,89 +91,6 @@ class _ReportsScreenState extends State<ReportsScreen>
     );
   }
 
-  Widget _monthlyTab() {
-    return FutureBuilder<List<MonthlyReportEntry>>(
-      future: _monthlyFuture,
-      builder: (context, snap) {
-        if (snap.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snap.hasError) return _errorWidget(() => setState(_fetchAll));
-        final months = snap.data!;
-        // Line chart data
-        final spots = months
-            .asMap()
-            .entries
-            .map((e) => FlSpot(e.key.toDouble(), e.value.amountPaid))
-            .toList();
-        return Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            children: [
-              SizedBox(
-                height: 200,
-                child: LineChart(
-                  LineChartData(
-                    minY: 0,
-                    gridData: const FlGridData(show: true),
-                    borderData: FlBorderData(show: true),
-                    titlesData: FlTitlesData(
-                      leftTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: true),
-                      ),
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          interval: 1,
-                          getTitlesWidget: (value, meta) {
-                            final idx = value.toInt();
-                            if (idx < 0 || idx >= months.length) {
-                              return const SizedBox.shrink();
-                            }
-                            return Text(
-                              months[idx].month.substring(0, 3),
-                              style: const TextStyle(fontSize: 10),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    lineBarsData: [
-                      LineChartBarData(
-                        spots: spots,
-                        isCurved: true,
-                        dotData: const FlDotData(show: false),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: ListView(
-                  children: months
-                      .map(
-                        (m) => Card(
-                          margin: const EdgeInsets.symmetric(vertical: 6),
-                          child: ListTile(
-                            leading: const Icon(Icons.calendar_month),
-                            title: Text('${m.month} ${m.year}'),
-                            subtitle: Text(
-                              'Paid: ₹${m.amountPaid.toStringAsFixed(0)} • Pending: ₹${m.amountPending.toStringAsFixed(0)}',
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   Widget _yearlyTab() {
     return FutureBuilder<List<YearlyReportEntry>>(
       future: _yearlyFuture,
@@ -160,13 +98,15 @@ class _ReportsScreenState extends State<ReportsScreen>
         if (snap.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (snap.hasError) return _errorWidget(() => setState(_fetchAll));
+        if (snap.hasError) {
+          return _errorWidget(() {});
+        }
         final years = snap.data!;
         return Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
             children: [
-              _summaryRow(years),
+              _summaryRow(context, years),
               const SizedBox(height: 12),
               Expanded(
                 child: ListView(
@@ -200,7 +140,9 @@ class _ReportsScreenState extends State<ReportsScreen>
         if (snap.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (snap.hasError) return _errorWidget(() => setState(_fetchAll));
+        if (snap.hasError) {
+          return _errorWidget(() {});
+        }
         final data = snap.data!;
         final maxAmount = data
             .map((d) => d.amount)
@@ -278,6 +220,47 @@ class _ReportsScreenState extends State<ReportsScreen>
     );
   }
 
+  Widget _expensesTab() {
+    final expenseProvider = Provider.of<ExpenseProvider>(context);
+    final allExpenses = expenseProvider.allExpenses;
+    final currencyFormat = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(12.0),
+      itemCount: allExpenses.length,
+      itemBuilder: (context, index) {
+        final expense = allExpenses[index];
+        IconData icon;
+        Color color;
+        switch (expense.status) {
+          case ExpenseStatus.approved:
+            icon = Icons.check_circle;
+            color = Colors.green;
+            break;
+          case ExpenseStatus.rejected:
+            icon = Icons.cancel;
+            color = Colors.red;
+            break;
+          case ExpenseStatus.pending:
+          default:
+            icon = Icons.hourglass_top;
+            color = Colors.orange;
+            break;
+        }
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          child: ListTile(
+            leading: Icon(icon, color: color),
+            title: Text(expense.title),
+            subtitle: Text(
+                'Submitted by ${expense.submittedBy} on ${DateFormat.yMMMd().format(expense.submissionDate)}'),
+            trailing: Text(currencyFormat.format(expense.amount)),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _errorWidget(VoidCallback retry) {
     return Center(
       child: Column(
@@ -293,41 +276,26 @@ class _ReportsScreenState extends State<ReportsScreen>
 
   @override
   Widget build(BuildContext context) {
-    /*return Scaffold(
+    return Scaffold(
+      // This AppBar is nested within the main AppShell's AppBar.
+      // It only contains the TabBar for this specific screen.
       appBar: AppBar(
-        title: Text('Reports'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: () {
-              // The Consumer in main.dart will handle navigation after logout.
-              Provider.of<AuthProvider>(context, listen: false).logout();
-            },
-          ),
-        ],
-        bottom: TabBar(
+        automaticallyImplyLeading: false, // Removes back button
+        title: TabBar(
           controller: _tabController,
-          tabs: [
-            Tab(text: 'Monthly'),
-            Tab(text: 'Yearly'),
+          tabs: const [
+            Tab(text: 'Yearly Inward'),
             Tab(text: 'YoY'),
+            Tab(text: 'Expenses'),
           ],
-
-          indicator: UnderlineTabIndicator(
-            borderSide: BorderSide(
-              width: 3.0,
-              color: Theme.of(context).colorScheme.secondary,
-            ),
-          ),
         ),
+        backgroundColor: Colors.blue[800],
+        elevation: 0,
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [_monthlyTab(), _yearlyTab(), _yoyTab()],
-      ),*/
-    return TabBarView(
-      controller: _tabController,
-      children: [_monthlyTab(), _yearlyTab(), _yoyTab()],
+        children: [_yearlyTab(), _yoyTab(), _expensesTab()],
+      ),
     );
   }
 }

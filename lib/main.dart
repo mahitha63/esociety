@@ -3,15 +3,18 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/family_provider.dart'; // Import FamilyProvider
 import '../providers/maintenance_provider.dart'; // Import MaintenanceProvider
+import '../providers/expense_provider.dart'; // Import ExpenseProvider
 import '../screens/splash_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/signup_screen.dart';
-import '../screens/reports_screen.dart';
 import '../screens/dashboard_screen.dart';
+import '../screens/reports_screen.dart';
 import '../screens/payments_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/monthly_maintenance_screen.dart';
 import '../models/user_profile.dart';
+import '../screens/create_expense_screen.dart';
+import '../screens/expense_approval_screen.dart';
 import '../screens/families_screen.dart'; // ✅ fixed path
 
 // --- DEVELOPMENT ---
@@ -28,6 +31,9 @@ void main() {
         ), // Provide FamilyProvider here
         ChangeNotifierProvider(
           create: (_) => MaintenanceProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ExpenseProvider(),
         ),
       ],
       child: const MainApp(),
@@ -66,6 +72,10 @@ class MainApp extends StatelessWidget {
                 const MonthlyMaintenanceScreen(),
             FamiliesScreen.routeName: (_) =>
                 const FamiliesScreen(), // Add FamiliesScreen route
+            CreateExpenseScreen.routeName: (_) =>
+                const CreateExpenseScreen(),
+            ExpenseApprovalScreen.routeName: (_) =>
+                const ExpenseApprovalScreen(),
           },
         );
       },
@@ -132,7 +142,7 @@ class _AppShellState extends State<AppShell> {
     // List of widgets to call in the body. We pass the navigation function
     // to the DashboardScreen so it can switch tabs.
     final List<Widget> widgetOptions = <Widget>[
-      DashboardScreen(onNavigate: _onItemTapped), // Index 0: Dashboard
+      const DashboardScreen(), // Index 0: Dashboard (no longer needs onNavigate)
       const PaymentsScreen(), // Index 1: Payments
       const FamiliesScreen(), // Index 2: Families
       if (widget.role == 'admin')

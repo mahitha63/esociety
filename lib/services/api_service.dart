@@ -163,37 +163,50 @@ class ApiService {
     // Uncomment the line below to test the error handling UI
     // throw Exception('Failed to load maintenance data');
 
-    final now = DateTime.now();
-    final dueDate = DateTime(now.year, now.month, 10);
-
+    // This is now the single source of truth for dummy maintenance data.
+    // It includes history for multiple users to ensure a good demo experience.
     return [
       MaintenanceRecord(
-          familyName: 'Sharma Family',
+          familyName: 'Sharma',
           flatNumber: 'A-101',
-          amount: 2500,
-          status: PaymentStatus.paid,
-          dueDate: dueDate,
-          paymentDate: DateTime(now.year, now.month, 5)),
+          amount: 500,
+          dueDate: DateTime.now().add(const Duration(days: 10)),
+          status: PaymentStatus.due),
       MaintenanceRecord(
-          familyName: 'Patel Family',
+          familyName: 'Sharma',
+          flatNumber: 'A-101',
+          amount: 500,
+          dueDate: DateTime.now().subtract(const Duration(days: 30)),
+          status: PaymentStatus.paid,
+          paymentDate: DateTime.now().subtract(const Duration(days: 28))),
+      MaintenanceRecord(
+          familyName: 'Patel',
           flatNumber: 'B-204',
-          amount: 2500,
+          amount: 500,
+          dueDate: DateTime.now().subtract(const Duration(days: 5)),
           status: PaymentStatus.late,
-          dueDate: dueDate,
-          fine: 100),
+          fine: 50),
       MaintenanceRecord(
-          familyName: 'Khan Family',
-          flatNumber: 'C-301',
-          amount: 3000,
-          status: PaymentStatus.due,
-          dueDate: dueDate),
-      MaintenanceRecord(
-          familyName: 'Singh Family',
-          flatNumber: 'A-402',
-          amount: 2500,
+          familyName: 'Patel',
+          flatNumber: 'B-204',
+          amount: 500,
+          dueDate: DateTime.now().subtract(const Duration(days: 35)),
           status: PaymentStatus.paid,
-          dueDate: dueDate,
-          paymentDate: DateTime(now.year, now.month, 8)),
+          paymentDate: DateTime.now().subtract(const Duration(days: 32))),
+      MaintenanceRecord(
+          familyName: 'Patel',
+          flatNumber: 'B-204',
+          amount: 500,
+          dueDate: DateTime.now().subtract(const Duration(days: 65)),
+          status: PaymentStatus.paid,
+          paymentDate: DateTime.now().subtract(const Duration(days: 61))),
+      MaintenanceRecord(
+          familyName: 'Khan',
+          flatNumber: 'C-301',
+          amount: 500,
+          dueDate: DateTime.now().subtract(const Duration(days: 35)),
+          status: PaymentStatus.paid,
+          paymentDate: DateTime.now().subtract(const Duration(days: 32))),
     ];
   }
 

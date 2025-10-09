@@ -4,10 +4,60 @@ import '../services/family_service.dart';
 class FamilyProvider with ChangeNotifier {
   final FamilyService _service = FamilyService();
 
-  List<Map<String, dynamic>> _families = [];
+  // --- Dummy Data for Demonstration ---
+  // Pre-populating with data to show different states on the Families screen.
+  // This will be replaced by API calls.
+  List<Map<String, dynamic>> _families = [
+    {
+      'id': 'fam_001',
+      'name': 'Sharma',
+      'flatNumber': 'A-101',
+      'members': 4,
+      'submittedBy': 'sharma',
+    },
+    {
+      'id': 'fam_002',
+      'name': 'Singh',
+      'flatNumber': 'A-102',
+      'members': 3,
+      'submittedBy': 'singh',
+    },
+    {
+      'id': 'fam_003',
+      'name': 'Patel',
+      'flatNumber': 'B-204',
+      'members': 2,
+      'submittedBy': 'patel',
+    },
+    {
+      'id': 'fam_004',
+      'name': 'Khan',
+      'flatNumber': 'C-301',
+      'members': 5,
+      'submittedBy': 'khan',
+    },
+  ];
   List<Map<String, dynamic>> get families => _families;
 
-  List<Map<String, dynamic>> _pendingApproval = [];
+  List<Map<String, dynamic>> _pendingApproval = [
+    {
+      'id': 'fam_pending_001',
+      'name': 'Gupta',
+      'flatNumber': 'D-405',
+      'members': 5,
+      'submittedBy': 'gupta',
+      'status': 'pending', // This family is awaiting admin approval.
+    },
+    {
+      'id': 'fam_rejected_001',
+      'name': 'Sharma', // A second submission from the same user
+      'flatNumber': 'A-101',
+      'members': 2, // e.g., they tried to submit with incorrect data
+      'submittedBy': 'sharma',
+      'status': 'rejected', // This request was rejected by the admin.
+      'rejectionReason': 'Duplicate submission. Family already exists.',
+    },
+  ];
   List<Map<String, dynamic>> get pendingApproval => _pendingApproval;
 
   Future<void> loadFamilies() async {
