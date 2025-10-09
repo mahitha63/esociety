@@ -56,9 +56,11 @@ class MaintenanceProvider with ChangeNotifier {
   /// Simulates making a payment for a specific family's most recent due/late record.
   Future<void> makePayment(String familyName) async {
     // Find the first record for the user that is not paid.
-    final index = _records.indexWhere((r) =>
-        r.familyName.toLowerCase() == familyName.toLowerCase() &&
-        r.status != PaymentStatus.paid);
+    final index = _records.indexWhere(
+      (r) =>
+          r.familyName.toLowerCase() == familyName.toLowerCase() &&
+          r.status != PaymentStatus.paid,
+    );
 
     if (index != -1) {
       // Simulate network delay
@@ -67,10 +69,18 @@ class MaintenanceProvider with ChangeNotifier {
       final oldRecord = _records[index];
       // Create a new record with the updated status and payment date
       _records[index] = oldRecord.copyWith(
-          status: PaymentStatus.paid,
-          paymentDate: DateTime.now(),
-          fine: 0); // Clear fine on payment
+        status: PaymentStatus.paid,
+        paymentDate: DateTime.now(),
+        fine: 0,
+      ); // Clear fine on payment
       notifyListeners();
     }
+  }
+
+  /// A method specifically for testing to inject mock data.
+  @visibleForTesting
+  void setRecordsForTest(List<MaintenanceRecord> records) {
+    _records = records;
+    notifyListeners();
   }
 }

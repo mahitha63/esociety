@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/maintenance_provider.dart';
-
 import '../providers/auth_provider.dart';
 import '../providers/family_provider.dart';
 import '../providers/expense_provider.dart';
@@ -36,7 +35,9 @@ class DashboardScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         // Admin sees society-wide stats, user sees personal stats.
-        auth.isAdmin ? _buildAdminQuickStats(context) : _buildUserQuickStats(context),
+        auth.isAdmin
+            ? _buildAdminQuickStats(context)
+            : _buildUserQuickStats(context),
       ],
     );
   }
@@ -63,23 +64,27 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  dueAmount > 0 ? currencyFormat.format(dueAmount) : 'All Clear!',
+                  dueAmount > 0
+                      ? currencyFormat.format(dueAmount)
+                      : 'All Clear!',
                   style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: dueAmount > 0 ? Colors.redAccent : Colors.green),
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: dueAmount > 0 ? Colors.redAccent : Colors.green,
+                  ),
                 ),
                 if (dueAmount > 0) ...[
                   const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerRight,
                     child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pushNamed('/monthly-maintenance');
-                        },
-                        child: const Text('View Payments')),
+                      onPressed: () {
+                        Navigator.of(context).pushNamed('/monthly-maintenance');
+                      },
+                      child: const Text('View Payments'),
+                    ),
                   ),
-                ]
+                ],
               ],
             );
           },
@@ -112,33 +117,29 @@ class DashboardScreen extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(
-              child: _buildStatCard(
-                'Defaulters',
-                defaulterCount.toString(),
-                defaulterCount > 0 ? Colors.red : Colors.green,
-              ),
+            _buildStatCard(
+              'Defaulters',
+              defaulterCount.toString(),
+              defaulterCount > 0 ? Colors.red : Colors.green,
             ),
             const SizedBox(width: 8),
-            Expanded(
-              child: _buildStatCard(
-                'Expense Approvals',
-                pendingExpenses.toString(),
-                pendingExpenses > 0
-                    ? Colors.purple
-                    : Colors.blue,
-              ),
+            _buildStatCard(
+              'Expense Approvals',
+              pendingExpenses.toString(),
+              pendingExpenses > 0 ? Colors.purple : Colors.blue,
             ),
           ],
         ),
         const SizedBox(height: 8),
-        _buildStatCard(
-            'Expense Approvals',
-            '${family.pendingApproval.where((p) => p['status'] == 'pending').length} Pending Families',
-            pendingApprovals > 0
-                ? Colors.orange
-                : Colors.blue,
-            valueFontSize: 18),
+        Row(
+          children: [
+            _buildStatCard(
+              'Family Approvals',
+              pendingApprovals.toString(),
+              pendingApprovals > 0 ? Colors.orange : Colors.blue,
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -148,9 +149,13 @@ class DashboardScreen extends StatelessWidget {
     final family = Provider.of<FamilyProvider>(context);
     return Row(
       children: [
-        Expanded(child: _buildStatCard('Total Families', family.families.length.toString(), Colors.blue)),
+        _buildStatCard(
+          'Total Families',
+          family.families.length.toString(),
+          Colors.blue,
+        ),
         const SizedBox(width: 8),
-        Expanded(child: _buildStatCard('Open Complaints', '2', Colors.orange)),
+        _buildStatCard('Open Complaints', '2', Colors.orange),
       ],
     );
   }
@@ -159,16 +164,20 @@ class DashboardScreen extends StatelessWidget {
   Widget _buildUserQuickStats(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: _buildStatCard('Notices', '1', Colors.blue)),
+        _buildStatCard('Notices', '1', Colors.blue),
         const SizedBox(width: 8),
-        Expanded(child: _buildStatCard('Visitors Today', '5', Colors.green)),
+        _buildStatCard('Visitors Today', '5', Colors.green),
       ],
     );
   }
 
   // Helper method to build a stat card to avoid code repetition
-  Widget _buildStatCard(String title, String value, Color color,
-      {double valueFontSize = 24}) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    Color color, {
+    double valueFontSize = 24,
+  }) {
     return Expanded(
       child: Card(
         child: Padding(

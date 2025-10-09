@@ -57,7 +57,10 @@ class _ReportsScreenState extends State<ReportsScreen>
     double expense = years.fold(0.0, (s, y) => s + y.totalExpense);
 
     // Dynamically calculate pending amount from the MaintenanceProvider
-    final maintenance = Provider.of<MaintenanceProvider>(context, listen: false);
+    final maintenance = Provider.of<MaintenanceProvider>(
+      context,
+      listen: false,
+    );
     final pending = maintenance.userRecords
         .where((r) => r.status == 'late' || r.status == 'due')
         .fold(0.0, (sum, r) => sum + r.amount + (r.fine ?? 0));
@@ -253,7 +256,8 @@ class _ReportsScreenState extends State<ReportsScreen>
             leading: Icon(icon, color: color),
             title: Text(expense.title),
             subtitle: Text(
-                'Submitted by ${expense.submittedBy} on ${DateFormat.yMMMd().format(expense.submissionDate)}'),
+              'Submitted by ${expense.submittedBy} on ${DateFormat.yMMMd().format(expense.submissionDate)}',
+            ),
             trailing: Text(currencyFormat.format(expense.amount)),
           ),
         );
@@ -266,7 +270,10 @@ class _ReportsScreenState extends State<ReportsScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('Failed to load data', style: TextStyle(color: Colors.red)),
+          const Text(
+            'Failed to load data',
+            style: TextStyle(color: Colors.red),
+          ),
           const SizedBox(height: 8),
           ElevatedButton(onPressed: retry, child: const Text('Retry')),
         ],
@@ -289,7 +296,7 @@ class _ReportsScreenState extends State<ReportsScreen>
             Tab(text: 'Expenses'),
           ],
         ),
-        backgroundColor: Colors.blue[800],
+        backgroundColor: const Color.fromARGB(255, 0, 0, 0),
         elevation: 0,
       ),
       body: TabBarView(

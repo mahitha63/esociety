@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
-// Import the screens for each tab.
-import 'dashboard_screen.dart'; // Dev B's work
-import 'monthly_maintenance_screen.dart'; // Dev C's work (used for Payments tab)
-import 'families_screen.dart'; // Dev D's work
-import 'reports_screen.dart'; // Dev A's work
-import 'profile_screen.dart'; // Placeholder for Dev D/A
+import 'dashboard_screen.dart';
+import 'monthly_maintenance_screen.dart';
+import 'families_screen.dart';
+import 'reports_screen.dart';
+import 'profile_screen.dart';
 import '../models/user_profile.dart'; // Model for ProfileScreen
 
 /// A stateful widget that manages the main navigation shell of the app.
@@ -24,7 +23,7 @@ class _MainScreenState extends State<MainScreen> {
 
   // Dummy data for the profile screen. In a real app, this would come from a provider.
   UserProfile _userProfile = UserProfile(
-    name: 'R. Sharma',
+    name: 'Sharma',
     email: 'sharma.r@example.com',
     phone: '+91 98765 43210',
     societyNumber: 'A-101',
@@ -67,10 +66,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       // The body displays the widget from _widgetOptions at the current index.
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _widgetOptions,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: _widgetOptions),
       bottomNavigationBar: BottomNavigationBar(
         // The items are ordered as per your request.
         items: const <BottomNavigationBarItem>[
@@ -78,22 +74,13 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.dashboard),
             label: 'Dashboard',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.payment),
-            label: 'Payments',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'Families',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Payments'),
+          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Families'),
           BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart),
             label: 'Reports',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

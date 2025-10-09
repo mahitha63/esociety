@@ -23,8 +23,9 @@ class PaymentsScreen extends StatelessWidget {
           icon: Icons.house,
           title: 'Monthly Maintenance',
           subtitle: 'View inward payments, dues, and history.',
-          onTap: () =>
-              Navigator.of(context).pushNamed(MonthlyMaintenanceScreen.routeName),
+          onTap: () => Navigator.of(
+            context,
+          ).pushNamed(MonthlyMaintenanceScreen.routeName),
         ),
         _buildPaymentCategoryCard(
           context: context,
@@ -33,20 +34,23 @@ class PaymentsScreen extends StatelessWidget {
           subtitle: auth.isAdmin
               ? 'Approve or reject expense requests.'
               : 'Submit a new expense for approval.',
-          onTap: () => Navigator.of(context).pushNamed(auth.isAdmin
-              ? ExpenseApprovalScreen.routeName
-              : CreateExpenseScreen.routeName),
+          onTap: () => Navigator.of(context).pushNamed(
+            auth.isAdmin
+                ? ExpenseApprovalScreen.routeName
+                : CreateExpenseScreen.routeName,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildPaymentCategoryCard(
-      {required BuildContext context,
-      required IconData icon,
-      required String title,
-      required String subtitle,
-      required VoidCallback onTap}) {
+  Widget _buildPaymentCategoryCard({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 16),

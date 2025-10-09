@@ -51,6 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
     _password.text = 'Admin@123';
     _submit();
   }
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);

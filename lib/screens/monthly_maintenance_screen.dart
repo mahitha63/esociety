@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/maintenance_record.dart';
-import 'dart:async';
 import 'package:provider/provider.dart';
 import '../providers/maintenance_provider.dart';
 import '../providers/auth_provider.dart';
@@ -45,8 +44,10 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => Provider.of<MaintenanceProvider>(context, listen: false)
-            .fetchMaintenanceRecords(auth.token, auth.username),
+        onRefresh: () => Provider.of<MaintenanceProvider>(
+          context,
+          listen: false,
+        ).fetchMaintenanceRecords(auth.token, auth.username),
         child: Consumer<MaintenanceProvider>(
           builder: (context, maintenance, child) {
             if (maintenance.isLoading && maintenance.userRecords.isEmpty) {
@@ -158,8 +159,14 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
           const Text('Please check your connection and try again.'),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => Provider.of<MaintenanceProvider>(context, listen: false)
-                .fetchMaintenanceRecords(Provider.of<AuthProvider>(context, listen: false).token, Provider.of<AuthProvider>(context, listen: false).username),
+            onPressed: () =>
+                Provider.of<MaintenanceProvider>(
+                  context,
+                  listen: false,
+                ).fetchMaintenanceRecords(
+                  Provider.of<AuthProvider>(context, listen: false).token,
+                  Provider.of<AuthProvider>(context, listen: false).username,
+                ),
             icon: const Icon(Icons.refresh),
             label: const Text('Try Again'),
             style: ElevatedButton.styleFrom(
@@ -215,7 +222,9 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
   ) {
     // Find records for the current user.
     final userSpecificRecords = allRecords
-        .where((r) => r.familyName.toLowerCase() == currentUsername?.toLowerCase())
+        .where(
+          (r) => r.familyName.toLowerCase() == currentUsername?.toLowerCase(),
+        )
         .toList();
 
     // Sort records by due date, newest first, to ensure the most recent one is the 'current' record.
@@ -245,7 +254,9 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
           ),
           const Divider(),
           // Create a list of history tiles from the past records.
-          ...historyRecords.map((record) => _buildUserHistoryTile(record)).toList(),
+          ...historyRecords
+              .map((record) => _buildUserHistoryTile(record))
+              .toList(),
         ],
       ],
     );
@@ -338,9 +349,10 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
                   : ElevatedButton(
                       onPressed: () async {
                         setState(() => _isPaying = true);
-                        await Provider.of<MaintenanceProvider>(context,
-                                listen: false)
-                            .makePayment(record.familyName);
+                        await Provider.of<MaintenanceProvider>(
+                          context,
+                          listen: false,
+                        ).makePayment(record.familyName);
 
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -353,9 +365,13 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 40, vertical: 12)),
-                      child: const Text('Pay Now')),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 40,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text('Pay Now'),
+                    ),
             ],
           ],
         ),
@@ -637,7 +653,9 @@ class _MonthlyMaintenanceScreenState extends State<MonthlyMaintenanceScreen>
       leading: icon,
       title: Text(
         'Maintenance for ${DateFormat('MMMM yyyy').format(record.dueDate)}' +
-            (record.status == PaymentStatus.paid ? ' (Paid)' : ''), // Explicitly mark paid transactions
+            (record.status == PaymentStatus.paid
+                ? ' (Paid)'
+                : ''), // Explicitly mark paid transactions
       ),
       trailing: Text(
         currencyFormat.format(record.amount),

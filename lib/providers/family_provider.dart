@@ -10,7 +10,7 @@ class FamilyProvider with ChangeNotifier {
   List<Map<String, dynamic>> _families = [
     {
       'id': 'fam_001',
-      'name': 'Sharma',
+      'name': 'R Sharma',
       'flatNumber': 'A-101',
       'members': 4,
       'submittedBy': 'sharma',
@@ -73,9 +73,7 @@ class FamilyProvider with ChangeNotifier {
   Map<String, dynamic>? getPendingSubmissionForUser(String username) {
     try {
       // Find any submission (pending or rejected) that isn't approved yet.
-      return _pendingApproval.firstWhere(
-        (p) => p['submittedBy'] == username,
-      );
+      return _pendingApproval.firstWhere((p) => p['submittedBy'] == username);
     } catch (e) {
       return null; // No pending submission found
     }
@@ -85,8 +83,9 @@ class FamilyProvider with ChangeNotifier {
   bool hasApprovedFamily(String username) {
     // This logic assumes the family name is tied to the username.
     // A more robust implementation would use a dedicated 'ownerId' field.
-    return _families
-        .any((f) => (f['name'] as String).toLowerCase().contains(username));
+    return _families.any(
+      (f) => (f['name'] as String).toLowerCase().contains(username),
+    );
   }
 
   Future<void> addFamily(Map<String, dynamic> familyData) async {

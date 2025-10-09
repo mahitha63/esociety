@@ -27,7 +27,10 @@ class _CreateExpenseScreenState extends State<CreateExpenseScreen> {
 
   void _submitRequest() {
     if (_formKey.currentState!.validate()) {
-      final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+      final expenseProvider = Provider.of<ExpenseProvider>(
+        context,
+        listen: false,
+      );
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
       // Call the provider to add the new expense
@@ -92,7 +95,9 @@ class _CreateExpenseScreenState extends State<CreateExpenseScreen> {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _submitRequest,
-              style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16)),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.all(16),
+              ),
               child: const Text('Submit for Approval'),
             ),
           ],

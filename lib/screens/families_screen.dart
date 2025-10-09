@@ -36,8 +36,9 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
     final username = authProvider.username!;
 
     // Check the user's status
-    final pendingSubmission =
-        familyProvider.getPendingSubmissionForUser(username);
+    final pendingSubmission = familyProvider.getPendingSubmissionForUser(
+      username,
+    );
     final hasApproved = familyProvider.hasApprovedFamily(username);
 
     return Scaffold(
@@ -70,7 +71,8 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
                     child: ListTile(
                       title: Text(family['name'] ?? 'No Name'),
                       subtitle: Text(
-                          "Flat: ${family['flatNumber'] ?? 'N/A'} • Members: ${family['members'] ?? 0}"),
+                        "Flat: ${family['flatNumber'] ?? 'N/A'} • Members: ${family['members'] ?? 0}",
+                      ),
                       trailing: authProvider.isAdmin
                           ? Row(
                               mainAxisSize: MainAxisSize.min,
@@ -78,11 +80,16 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
                                 CircleAvatar(
                                   backgroundColor: Colors.white,
                                   child: IconButton(
-                                    icon: const Icon(Icons.edit,
-                                        color: Colors.blue),
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      color: Colors.blue,
+                                    ),
                                     onPressed: () {
                                       _editFamily(
-                                          context, family, familyProvider);
+                                        context,
+                                        family,
+                                        familyProvider,
+                                      );
                                     },
                                   ),
                                 ),
@@ -90,8 +97,10 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
                                 CircleAvatar(
                                   backgroundColor: Colors.white,
                                   child: IconButton(
-                                    icon: const Icon(Icons.delete,
-                                        color: Colors.red),
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                    ),
                                     onPressed: () {
                                       _deleteFamily(
                                         context,
@@ -127,28 +136,14 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
                     return Card(
                       margin: const EdgeInsets.all(10),
                       child: ListTile(
+                        onTap: () => _showApprovalDetailsDialog(
+                          context,
+                          pending,
+                          familyProvider,
+                        ),
                         title: Text(pending['name'] ?? 'New Family'),
                         subtitle: const Text("Awaiting approval..."),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.check,
-                                color: Colors.green,
-                              ),
-                              onPressed: () {
-                                familyProvider.approveFamily(index);
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close, color: Colors.red),
-                              onPressed: () {
-                                _showRejectionDialog(context, pending['id'], familyProvider);
-                              },
-                            ),
-                          ],
-                        ),
+                        trailing: const Icon(Icons.visibility),
                       ),
                     );
                   },
@@ -160,7 +155,12 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
       ),
       // The "Add" button is only visible to admins
       floatingActionButton: _buildFloatingActionButton(
-          context, authProvider, familyProvider, pendingSubmission, hasApproved),
+        context,
+        authProvider,
+        familyProvider,
+        pendingSubmission,
+        hasApproved,
+      ),
     );
   }
 
@@ -171,11 +171,9 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
     Map<String, dynamic>? pendingSubmission,
     bool hasApproved,
   ) {
-    // Show FAB for admin always.
-    // For users, only show if they have no pending and no approved family.
-    final bool canUserSubmit = !hasApproved && pendingSubmission == null;
-
-    if (authProvider.isAdmin || canUserSubmit) {
+    // Show FAB for admin and for regular users.
+    // This ensures users can always access the form.
+    if (authProvider.isAdmin || !authProvider.isAdmin) {
       return FloatingActionButton(
         backgroundColor: const Color.fromARGB(255, 228, 228, 228),
         child: const Icon(Icons.add),
@@ -194,16 +192,26 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
         margin: const EdgeInsets.all(16),
         child: ListTile(
           leading: Icon(Icons.cancel, color: Colors.red),
-          title: Text('Submission Rejected',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red[800])),
+          title: Text(
+            'Submission Rejected',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.red[800],
+            ),
+          ),
           subtitle: Text(
-              'Reason: ${submission['rejectionReason'] ?? 'No reason provided.'}'),
+            'Reason: ${submission['rejectionReason'] ?? 'No reason provided.'}',
+          ),
           trailing: IconButton(
             icon: const Icon(Icons.close),
             tooltip: 'Dismiss and try again',
             onPressed: () {
-              Provider.of<FamilyProvider>(context, listen: false)
-                  .clearRejectedSubmission(Provider.of<AuthProvider>(context, listen: false).username!);
+              Provider.of<FamilyProvider>(
+                context,
+                listen: false,
+              ).clearRejectedSubmission(
+                Provider.of<AuthProvider>(context, listen: false).username!,
+              );
             },
           ),
         ),
@@ -216,15 +224,92 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
       margin: const EdgeInsets.all(16),
       child: const ListTile(
         leading: Icon(Icons.hourglass_top, color: Colors.orange),
-        title: Text('Submission Pending',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          'Submission Pending',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         subtitle: Text('Your family details are awaiting admin approval.'),
       ),
     );
   }
 
+  // Show a dialog for the admin to view details before approval/rejection
+  void _showApprovalDetailsDialog(
+    BuildContext context,
+    Map<String, dynamic> pending,
+    FamilyProvider familyProvider,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Review Family Request'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildDetailRow('Family Name', pending['name'] ?? 'N/A'),
+              _buildDetailRow('Flat Number', pending['flatNumber'] ?? 'N/A'),
+              _buildDetailRow('Members', (pending['members'] ?? 0).toString()),
+              _buildDetailRow('Submitted By', pending['submittedBy'] ?? 'N/A'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton.icon(
+            onPressed: () {
+              Navigator.of(ctx).pop(); // Close this dialog first
+              _showRejectionDialog(context, pending['id'], familyProvider);
+            },
+            icon: const Icon(Icons.close),
+            label: const Text('Reject'),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              // The provider uses index, so we need to find it.
+              // A better approach would be for the provider to accept an ID.
+              final index = familyProvider.pendingApproval.indexWhere(
+                (p) => p['id'] == pending['id'],
+              );
+              if (index != -1) {
+                familyProvider.approveFamily(index);
+              }
+              Navigator.of(ctx).pop();
+            },
+            icon: const Icon(Icons.check),
+            label: const Text('Approve'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper widget to build detail rows in the dialog
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(value, style: const TextStyle(fontSize: 16)),
+        ],
+      ),
+    );
+  }
+
   // Show a dialog for the admin to enter a rejection reason
-  void _showRejectionDialog(BuildContext context, String id, FamilyProvider familyProvider) {
+  void _showRejectionDialog(
+    BuildContext context,
+    String id,
+    FamilyProvider familyProvider,
+  ) {
     final reasonController = TextEditingController();
     showDialog(
       context: context,
@@ -328,7 +413,9 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
 
   // Show a dialog with a form to add a new family
   void _showAddFamilyDialog(
-      BuildContext context, FamilyProvider familyProvider) {
+    BuildContext context,
+    FamilyProvider familyProvider,
+  ) {
     // Clear controllers for new entry
     _nameController.clear();
     _flatController.clear();
@@ -366,8 +453,9 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
                 ),
                 TextFormField(
                   controller: _membersController,
-                  decoration:
-                      const InputDecoration(labelText: 'Number of Members'),
+                  decoration: const InputDecoration(
+                    labelText: 'Number of Members',
+                  ),
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   validator: (value) {
@@ -399,10 +487,14 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
   }
 
   void _submitFamilyData(
-      BuildContext dialogContext, FamilyProvider familyProvider) {
+    BuildContext dialogContext,
+    FamilyProvider familyProvider,
+  ) {
     if (_formKey.currentState!.validate()) {
-      final username =
-          Provider.of<AuthProvider>(context, listen: false).username;
+      final username = Provider.of<AuthProvider>(
+        context,
+        listen: false,
+      ).username;
       familyProvider.addFamily({
         'id': DateTime.now().toString(), // Use a unique ID in a real app
         'name': _nameController.text,

@@ -29,12 +29,8 @@ void main() {
         ChangeNotifierProvider(
           create: (_) => FamilyProvider(),
         ), // Provide FamilyProvider here
-        ChangeNotifierProvider(
-          create: (_) => MaintenanceProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => ExpenseProvider(),
-        ),
+        ChangeNotifierProvider(create: (_) => MaintenanceProvider()),
+        ChangeNotifierProvider(create: (_) => ExpenseProvider()),
       ],
       child: const MainApp(),
     ),
@@ -72,8 +68,7 @@ class MainApp extends StatelessWidget {
                 const MonthlyMaintenanceScreen(),
             FamiliesScreen.routeName: (_) =>
                 const FamiliesScreen(), // Add FamiliesScreen route
-            CreateExpenseScreen.routeName: (_) =>
-                const CreateExpenseScreen(),
+            CreateExpenseScreen.routeName: (_) => const CreateExpenseScreen(),
             ExpenseApprovalScreen.routeName: (_) =>
                 const ExpenseApprovalScreen(),
           },
@@ -131,10 +126,17 @@ class _AppShellState extends State<AppShell> {
       societyNumber: _userProfile.societyNumber,
     );
 
-    // Fetch maintenance data once when the shell is initialized.
-    Provider.of<MaintenanceProvider>(context, listen: false).fetchMaintenanceRecords(
-      Provider.of<AuthProvider>(context, listen: false).token,
-      widget.username);
+    // Fetch maintenance data once after the first frame is built.
+    // This avoids the "setState() called during build" error.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<MaintenanceProvider>(
+        context,
+        listen: false,
+      ).fetchMaintenanceRecords(
+        Provider.of<AuthProvider>(context, listen: false).token,
+        widget.username,
+      );
+    });
   }
 
   @override
@@ -158,7 +160,7 @@ class _AppShellState extends State<AppShell> {
       'Payments',
       'Families',
       if (widget.role == 'admin') 'Reports',
-      'Profile'
+      'Profile',
     ];
 
     return Scaffold(
@@ -220,7 +222,7 @@ class _AppShellState extends State<AppShell> {
                     icon: Icons.person,
                     title: 'Profile',
                     index: widget.role == 'admin' ? 4 : 3,
-                    ),
+                  ),
                   const Divider(),
                   ListTile(
                     leading: const Icon(Icons.logout),

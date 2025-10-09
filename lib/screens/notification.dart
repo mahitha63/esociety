@@ -10,6 +10,12 @@ class AppNotification {
   final IconData icon;
   final Color color;
 
-  AppNotification(
-      {required this.title, required this.body, required this.date, required this.type, required this.icon, required this.color});
+  AppNotification({
+    required this.title,
+    required this.body,
+    required this.date,
+    required this.type,
+    required this.icon,
+    required this.color,
+  });
 }

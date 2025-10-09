@@ -1,4 +1,4 @@
-import 'package:esociety/providers/auth_provider.dart';
+import '../providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -21,14 +21,16 @@ class ExpenseApprovalScreen extends StatelessWidget {
         backgroundColor: Colors.blue[800],
       ),
       body: expenses.isEmpty
-          ? const Center(
-              child: Text('No pending expense approvals.'),
-            )
+          ? const Center(child: Text('No pending expense approvals.'))
           : ListView.builder(
               padding: const EdgeInsets.all(8.0),
               itemCount: expenses.length,
               itemBuilder: (context, index) {
-                return _buildExpenseCard(context, expenses[index], expenseProvider);
+                return _buildExpenseCard(
+                  context,
+                  expenses[index],
+                  expenseProvider,
+                );
               },
             ),
       floatingActionButton: FloatingActionButton.extended(
@@ -42,7 +44,10 @@ class ExpenseApprovalScreen extends StatelessWidget {
   }
 
   Widget _buildExpenseCard(
-      BuildContext context, Expense expense, ExpenseProvider provider) {
+    BuildContext context,
+    Expense expense,
+    ExpenseProvider provider,
+  ) {
     final currencyFormat = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
 
     return Card(
@@ -61,9 +66,10 @@ class ExpenseApprovalScreen extends StatelessWidget {
             Text(
               currencyFormat.format(expense.amount),
               style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor),
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor,
+              ),
             ),
             const Divider(height: 20),
             Text(
@@ -82,30 +88,40 @@ class ExpenseApprovalScreen extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () {
                     provider.rejectExpense(expense.id);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
                         content: Text('Expense Rejected'),
-                        backgroundColor: Colors.red));
+                        backgroundColor: Colors.red,
+                      ),
+                    );
                   },
-                  style:
-                      ElevatedButton.styleFrom(backgroundColor: Colors.red[50]),
-                  child:
-                      const Text('Reject', style: TextStyle(color: Colors.red)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[50],
+                  ),
+                  child: const Text(
+                    'Reject',
+                    style: TextStyle(color: Colors.red),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () {
-                    final adminUsername =
-                        Provider.of<AuthProvider>(context, listen: false)
-                            .username!;
+                    final adminUsername = Provider.of<AuthProvider>(
+                      context,
+                      listen: false,
+                    ).username!;
                     provider.approveExpense(expense.id, adminUsername);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
                         content: Text('Expense Approved'),
-                        backgroundColor: Colors.green));
+                        backgroundColor: Colors.green,
+                      ),
+                    );
                   },
                   child: const Text('Approve'),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),

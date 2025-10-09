@@ -19,7 +19,8 @@ class Expense {
     required this.amount,
     required this.submittedBy,
     required this.submissionDate,
-    this.invoiceUrl = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+    this.invoiceUrl =
+        'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
     this.status = ExpenseStatus.pending,
     this.approvedBy,
     this.approvalDate,
@@ -58,7 +59,8 @@ class ExpenseProvider with ChangeNotifier {
   ];
 
   List<Expense> get allExpenses => _expenses;
-  List<Expense> get pendingExpenses => _expenses.where((e) => e.status == ExpenseStatus.pending).toList();
+  List<Expense> get pendingExpenses =>
+      _expenses.where((e) => e.status == ExpenseStatus.pending).toList();
 
   void approveExpense(String id, String adminUsername) {
     final index = _expenses.indexWhere((e) => e.id == id);
