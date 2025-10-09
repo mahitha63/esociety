@@ -38,7 +38,7 @@ class _MainScreenState extends State<MainScreen> {
     // like _onItemTapped and state variables like _userProfile.
     _widgetOptions = <Widget>[
       // Index 0: Dashboard
-      DashboardScreen(onNavigate: _onItemTapped),
+      const DashboardScreen(),
       // Index 1: Payments (Using MonthlyMaintenanceScreen as the main payments view)
       const MonthlyMaintenanceScreen(),
       // Index 2: Families
