@@ -167,54 +167,64 @@ class ApiService {
     // It includes history for multiple users to ensure a good demo experience.
     return [
       MaintenanceRecord(
-          familyName: 'Sharma',
-          flatNumber: 'A-101',
-          amount: 500,
-          dueDate: DateTime.now().add(const Duration(days: 10)),
-          status: PaymentStatus.due),
+        familyName: 'Sharma',
+        flatNumber: 'A-101',
+        amount: 500,
+        dueDate: DateTime.now().add(const Duration(days: 10)),
+        status: PaymentStatus.due,
+      ),
       MaintenanceRecord(
-          familyName: 'Sharma',
-          flatNumber: 'A-101',
-          amount: 500,
-          dueDate: DateTime.now().subtract(const Duration(days: 30)),
-          status: PaymentStatus.paid,
-          paymentDate: DateTime.now().subtract(const Duration(days: 28))),
+        familyName: 'Sharma',
+        flatNumber: 'A-101',
+        amount: 500,
+        dueDate: DateTime.now().subtract(const Duration(days: 30)),
+        status: PaymentStatus.paid,
+        paymentDate: DateTime.now().subtract(const Duration(days: 28)),
+      ),
       MaintenanceRecord(
-          familyName: 'Patel',
-          flatNumber: 'B-204',
-          amount: 500,
-          dueDate: DateTime.now().subtract(const Duration(days: 5)),
-          status: PaymentStatus.late,
-          fine: 50),
+        familyName: 'Patel',
+        flatNumber: 'B-204',
+        amount: 500,
+        dueDate: DateTime.now().subtract(const Duration(days: 5)),
+        status: PaymentStatus.late,
+        fine: 50,
+      ),
       MaintenanceRecord(
-          familyName: 'Patel',
-          flatNumber: 'B-204',
-          amount: 500,
-          dueDate: DateTime.now().subtract(const Duration(days: 35)),
-          status: PaymentStatus.paid,
-          paymentDate: DateTime.now().subtract(const Duration(days: 32))),
+        familyName: 'Patel',
+        flatNumber: 'B-204',
+        amount: 500,
+        dueDate: DateTime.now().subtract(const Duration(days: 35)),
+        status: PaymentStatus.paid,
+        paymentDate: DateTime.now().subtract(const Duration(days: 32)),
+      ),
       MaintenanceRecord(
-          familyName: 'Patel',
-          flatNumber: 'B-204',
-          amount: 500,
-          dueDate: DateTime.now().subtract(const Duration(days: 65)),
-          status: PaymentStatus.paid,
-          paymentDate: DateTime.now().subtract(const Duration(days: 61))),
+        familyName: 'Patel',
+        flatNumber: 'B-204',
+        amount: 500,
+        dueDate: DateTime.now().subtract(const Duration(days: 65)),
+        status: PaymentStatus.paid,
+        paymentDate: DateTime.now().subtract(const Duration(days: 61)),
+      ),
       MaintenanceRecord(
-          familyName: 'Khan',
-          flatNumber: 'C-301',
-          amount: 500,
-          dueDate: DateTime.now().subtract(const Duration(days: 35)),
-          status: PaymentStatus.paid,
-          paymentDate: DateTime.now().subtract(const Duration(days: 32))),
+        familyName: 'Khan',
+        flatNumber: 'C-301',
+        amount: 500,
+        dueDate: DateTime.now().subtract(const Duration(days: 35)),
+        status: PaymentStatus.paid,
+        paymentDate: DateTime.now().subtract(const Duration(days: 32)),
+      ),
     ];
   }
 
-  static Future<List<MaintenanceRecord>> fetchMonthlyMaintenance(String? token) {
+  static Future<List<MaintenanceRecord>> fetchMonthlyMaintenance(
+    String? token,
+  ) {
     if (Config.useMockData) return fetchMonthlyMaintenanceMock();
     // In the future, a real HTTP call would go here.
     // return fetchMonthlyMaintenanceHttp(token ?? '');
-    throw UnimplementedError('HTTP implementation for maintenance not available');
+    throw UnimplementedError(
+      'HTTP implementation for maintenance not available',
+    );
   }
 
   // --- Dev C: Send Reminder Mock ---

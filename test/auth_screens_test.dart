@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import '../lib/providers/auth_provider.dart';
-import '../lib/screens/login_screen.dart';
-import '../lib/screens/signup_screen.dart';
+import 'package:esociety/providers/auth_provider.dart';
+import 'package:esociety/screens/login_screen.dart';
+import 'package:esociety/screens/signup_screen.dart';
 
 /// A helper function to create a testable widget with necessary providers.
 /// This avoids boilerplate code in each test.

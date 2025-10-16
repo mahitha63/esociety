@@ -4,7 +4,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../widgets/dashboard_card.dart' as widgets;
 import '../models/reports.dart';
-import '../providers/auth_provider.dart';
 import '../providers/maintenance_provider.dart';
 import '../providers/expense_provider.dart';
 

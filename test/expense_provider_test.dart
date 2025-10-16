@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/providers/expense_provider.dart';
+import 'package:esociety/providers/expense_provider.dart';
 
 void main() {
   group('ExpenseProvider Unit Tests', () {

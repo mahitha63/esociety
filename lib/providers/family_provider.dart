@@ -39,7 +39,7 @@ class FamilyProvider with ChangeNotifier {
   ];
   List<Map<String, dynamic>> get families => _families;
 
-  List<Map<String, dynamic>> _pendingApproval = [
+  final List<Map<String, dynamic>> _pendingApproval = [
     {
       'id': 'fam_pending_001',
       'name': 'Gupta',

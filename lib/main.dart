@@ -15,7 +15,8 @@ import '../screens/monthly_maintenance_screen.dart';
 import '../models/user_profile.dart';
 import '../screens/create_expense_screen.dart';
 import '../screens/expense_approval_screen.dart';
-import '../screens/families_screen.dart'; // ✅ fixed path
+import '../screens/families_screen.dart';
+import 'package:esociety/providers/dashboard_provider.dart'; // <-- New import
 
 // --- DEVELOPMENT ---
 // Set to `true` to bypass login and go directly to the dashboard.
@@ -26,11 +27,12 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(
-          create: (_) => FamilyProvider(),
-        ), // Provide FamilyProvider here
+        ChangeNotifierProvider(create: (_) => FamilyProvider()),
         ChangeNotifierProvider(create: (_) => MaintenanceProvider()),
         ChangeNotifierProvider(create: (_) => ExpenseProvider()),
+        ChangeNotifierProvider(
+          create: (_) => DashboardProvider(),
+        ), // <-- This line is added
       ],
       child: const MainApp(),
     ),
@@ -91,7 +93,6 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _selectedIndex = 0;
 
-  // Centralized state for user profile, managed by the AppShell.
   UserProfile _userProfile = UserProfile(
     name: 'User', // Will be updated in initState
     email: 'user@example.com',
@@ -99,9 +100,7 @@ class _AppShellState extends State<AppShell> {
     societyNumber: 'A-12345',
   );
 
-  // Callback for the ProfileScreen to update the user's data.
   void _updateProfile(UserProfile newProfile) {
-    // This will trigger a rebuild of AppShell, updating the drawer header.
     setState(() {
       _userProfile = newProfile;
     });
@@ -116,9 +115,7 @@ class _AppShellState extends State<AppShell> {
   @override
   void initState() {
     super.initState();
-    // Set the initial screen to Dashboard for all users.
     _selectedIndex = 0;
-    // Initialize the user profile with data passed from the AuthProvider
     _userProfile = UserProfile(
       name: widget.username,
       email: '${widget.username}@example.com', // Placeholder email
@@ -126,8 +123,6 @@ class _AppShellState extends State<AppShell> {
       societyNumber: _userProfile.societyNumber,
     );
 
-    // Fetch maintenance data once after the first frame is built.
-    // This avoids the "setState() called during build" error.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<MaintenanceProvider>(
         context,
@@ -141,18 +136,15 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    // List of widgets to call in the body. We pass the navigation function
-    // to the DashboardScreen so it can switch tabs.
     final List<Widget> widgetOptions = <Widget>[
-      const DashboardScreen(), // Index 0: Dashboard (no longer needs onNavigate)
-      const PaymentsScreen(), // Index 1: Payments
-      const FamiliesScreen(), // Index 2: Families
-      if (widget.role == 'admin')
-        const ReportsScreen(), // Index 3: Reports (Admin only)
+      const DashboardScreen(),
+      const PaymentsScreen(),
+      const FamiliesScreen(),
+      if (widget.role == 'admin') const ReportsScreen(),
       ProfileScreen(
         userProfile: _userProfile,
         onProfileUpdated: _updateProfile,
-      ), // Index 4: Profile
+      ),
     ];
 
     final List<String> titles = <String>[
@@ -228,7 +220,6 @@ class _AppShellState extends State<AppShell> {
                     leading: const Icon(Icons.logout),
                     title: const Text('Logout'),
                     onTap: () {
-                      // Call the logout method from the provider
                       Provider.of<AuthProvider>(
                         context,
                         listen: false,
@@ -251,7 +242,7 @@ class _AppShellState extends State<AppShell> {
       ),
       body: Center(child: widgetOptions.elementAt(_selectedIndex)),
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed, // Good for 4+ items
+        type: BottomNavigationBarType.fixed,
         items: <BottomNavigationBarItem>[
           const BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -281,8 +272,6 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
-  // Helper method to build drawer items to reduce code repetition
-  // and handle selection state.
   Widget _buildDrawerItem({
     required IconData icon,
     required String title,

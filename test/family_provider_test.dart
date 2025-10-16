@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/providers/family_provider.dart';
+import 'package:esociety/providers/family_provider.dart';
 
 void main() {
   // Group of tests for the FamilyProvider

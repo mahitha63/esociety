@@ -191,7 +191,7 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
         color: Colors.red[50],
         margin: const EdgeInsets.all(16),
         child: ListTile(
-          leading: Icon(Icons.cancel, color: Colors.red),
+          leading: const Icon(Icons.cancel, color: Colors.red),
           title: Text(
             'Submission Rejected',
             style: TextStyle(

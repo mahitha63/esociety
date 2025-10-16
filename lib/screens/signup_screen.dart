@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
 import 'login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -16,10 +14,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   var _isLoading = false;
 
-  final Map<String, String> _authData = {
-    'username': '',
-    'password': '',
-  };
+  final Map<String, String> _authData = {'username': '', 'password': ''};
 
   @override
   void dispose() {
@@ -117,8 +112,9 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
-                  decoration:
-                      const InputDecoration(labelText: 'Confirm Password'),
+                  decoration: const InputDecoration(
+                    labelText: 'Confirm Password',
+                  ),
                   obscureText: true,
                   validator: (value) {
                     if (value != _passwordController.text) {
@@ -140,8 +136,9 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context)
-                        .pushReplacementNamed(LoginScreen.routeName);
+                    Navigator.of(
+                      context,
+                    ).pushReplacementNamed(LoginScreen.routeName);
                   },
                   child: const Text('Already have an account? Log In'),
                 ),
