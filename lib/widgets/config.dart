@@ -7,7 +7,7 @@ class Config {
   // - for Android emulator use 10.0.2.2
   // - for device use the PC LAN IP (e.g., 192.168.1.100)
   static const String host = '10.0.2.2';
-  static const int port = 8080;
+  static const int port = 8088;
 
   static String get baseUrl => 'http://$host:$port/api';
 }
