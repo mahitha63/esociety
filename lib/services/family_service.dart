@@ -1,31 +1,32 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../widgets/config.dart';
 
 class FamilyService {
-  static String get baseUrl => "${Config.baseUrl}/families";
+  // ✅ For Android emulator to talk to your Spring Boot on localhost:8088
+  static const String baseUrl = "http://10.0.2.2:8088/api/families";
 
-  Map<String, String> _headers(String? token) => {
-        'Content-Type': 'application/json',
-        'X-USER': (token ?? '').isEmpty
-            ? 'guest'
-            : (token ?? '').replaceFirst('session-', ''),
-        'X-ROLES': 'ADMIN',
-      };
+  /// Fetch all families (optionally by ward)
+  Future<List<Map<String, dynamic>>> fetchFamilies({String? wardId}) async {
+    final url = wardId != null
+        ? Uri.parse("$baseUrl/ward/$wardId")
+        : Uri.parse(
+            baseUrl,
+          ); // (Your backend currently has /families/{id} and /families/ward/{id})
 
-  Future<List<Map<String, dynamic>>> fetchFamilies(String? token,
-      {String? wardId}) async {
-    final uri = wardId == null
-        ? Uri.parse(baseUrl)
-        : Uri.parse("$baseUrl/ward/$wardId");
-    final response = await http.get(uri, headers: _headers(token));
+    final response = await http.get(
+      url,
+      headers: {"Content-Type": "application/json"},
+    );
+
     if (response.statusCode == 200) {
-      final api = json.decode(response.body);
-      if (api is Map && api.containsKey('data')) {
-        return List<Map<String, dynamic>>.from(api['data']);
+      final data = json.decode(response.body);
+
+      // Expected backend response: { success, message, data: [...] }
+      if (data['success'] == true && data['data'] is List) {
+        return List<Map<String, dynamic>>.from(data['data']);
+      } else {
+        throw Exception("Unexpected response format from backend");
       }
-      // Some endpoints may return raw lists
-      return List<Map<String, dynamic>>.from(api);
     } else {
       throw Exception(
         "Failed to fetch families: ${response.statusCode} - ${response.body}",
@@ -36,7 +37,6 @@ class FamilyService {
   /// Add new family (real backend integration)
   Future<Map<String, dynamic>> addFamily(
     Map<String, dynamic> familyData,
-    String? token,
   ) async {
     final url = Uri.parse(baseUrl);
 
@@ -51,20 +51,18 @@ class FamilyService {
     };
 
     final response = await http.post(
-      Uri.parse(baseUrl),
-      headers: _headers(token),
-      body: json.encode({
-        'wardId': familyData['wardId'] ?? familyData['flatNumber'] ?? 'A-101',
-        'headName': familyData['name'],
-        'address': familyData['flatNumber'],
-        'membersCount': familyData['members'],
-        'monthlyFee': 500.0,
-      }),
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: json.encode(payload),
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      final api = json.decode(response.body);
-      return api is Map && api.containsKey('data') ? api['data'] : api;
+      final data = json.decode(response.body);
+      if (data['success'] == true && data['data'] != null) {
+        return Map<String, dynamic>.from(data['data']);
+      } else {
+        throw Exception("Backend error: ${data['message']}");
+      }
     } else {
       throw Exception(
         "Failed to add family: ${response.statusCode} - ${response.body}",
@@ -76,7 +74,6 @@ class FamilyService {
   Future<Map<String, dynamic>> updateFamily(
     String id,
     Map<String, dynamic> familyData,
-    String? token,
   ) async {
     final url = Uri.parse("$baseUrl/$id");
 
@@ -89,18 +86,14 @@ class FamilyService {
     };
 
     final response = await http.put(
-      Uri.parse("$baseUrl/$id"),
-      headers: _headers(token),
-      body: json.encode({
-        'headName': familyData['name'],
-        'address': familyData['flatNumber'],
-        'membersCount': familyData['members'],
-      }),
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: json.encode(payload),
     );
 
     if (response.statusCode == 200) {
-      final api = json.decode(response.body);
-      return api is Map && api.containsKey('data') ? api['data'] : api;
+      final data = json.decode(response.body);
+      return Map<String, dynamic>.from(data['data'] ?? {});
     } else {
       throw Exception(
         "Failed to update family: ${response.statusCode} - ${response.body}",
@@ -108,11 +101,10 @@ class FamilyService {
     }
   }
 
-  Future<void> deleteFamily(String id, String? token) async {
-    final response = await http.delete(
-      Uri.parse("$baseUrl/$id"),
-      headers: _headers(token),
-    );
+  /// Delete a family
+  Future<void> deleteFamily(String id) async {
+    final url = Uri.parse("$baseUrl/$id");
+    final response = await http.delete(url);
 
     if (response.statusCode != 200) {
       throw Exception(
