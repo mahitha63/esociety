@@ -11,26 +11,8 @@ class FamilyProvider with ChangeNotifier {
   List<Map<String, dynamic>> _families = [];
   List<Map<String, dynamic>> get families => _families;
 
-  final List<Map<String, dynamic>> _pendingApproval = [
-    {
-      'id': 'fam_pending_001',
-      'name': 'Gupta',
-      'flatNumber': 'D-405',
-      'members': 5,
-      'submittedBy': 'gupta',
-      'status': 'pending', // This family is awaiting admin approval.
-    },
-    {
-      'id': 'fam_rejected_001',
-      'name': 'Sharma', // A second submission from the same user
-      'flatNumber': 'A-101',
-      'members': 2, // e.g., they tried to submit with incorrect data
-      'submittedBy': 'sharma',
-      'status': 'rejected', // This request was rejected by the admin.
-      'rejectionReason': 'Duplicate submission. Family already exists.',
-    },
-  ];
-  List<Map<String, dynamic>> get pendingApproval => _pendingApproval;
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
 
   Future<void> loadFamilies({String? wardId, String? token}) async {
     try {
@@ -41,13 +23,13 @@ class FamilyProvider with ChangeNotifier {
     }
   }
 
-  // Helper to check if a user has a pending submission
-  Map<String, dynamic>? getPendingSubmissionForUser(String username) {
     try {
-      // Find any submission (pending or rejected) that isn't approved yet.
-      return _pendingApproval.firstWhere((p) => p['submittedBy'] == username);
+      _families = await _service.fetchFamilies(wardId: wardId);
     } catch (e) {
-      return null; // No pending submission found
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -73,6 +55,7 @@ class FamilyProvider with ChangeNotifier {
       });
       notifyListeners();
     } catch (e) {
+      debugPrint("❌ Error adding family: $e");
       rethrow;
     }
   }
@@ -105,10 +88,11 @@ class FamilyProvider with ChangeNotifier {
       await _service.updateFamily(id, familyData, token);
       final index = _families.indexWhere((f) => f['id'] == id);
       if (index != -1) {
-        _families[index] = familyData;
+        _families[index] = updated;
         notifyListeners();
       }
     } catch (e) {
+      debugPrint("❌ Error updating family: $e");
       rethrow;
     }
   }
@@ -119,6 +103,7 @@ class FamilyProvider with ChangeNotifier {
       _families.removeWhere((f) => f['id'] == id);
       notifyListeners();
     } catch (e) {
+      debugPrint("❌ Error deleting family: $e");
       rethrow;
     }
   }

@@ -27,14 +27,29 @@ class FamilyService {
       // Some endpoints may return raw lists
       return List<Map<String, dynamic>>.from(api);
     } else {
-      throw Exception("Failed to load families");
+      throw Exception(
+        "Failed to fetch families: ${response.statusCode} - ${response.body}",
+      );
     }
   }
 
+  /// Add new family (real backend integration)
   Future<Map<String, dynamic>> addFamily(
     Map<String, dynamic> familyData,
     String? token,
   ) async {
+    final url = Uri.parse(baseUrl);
+
+    // ✅ Ensure data matches your Spring Boot DTO
+    final payload = {
+      "familyId": familyData["familyId"],
+      "wardId": familyData["wardId"],
+      "headName": familyData["headName"],
+      "address": familyData["address"] ?? "",
+      "membersCount": familyData["membersCount"],
+      "monthlyFee": familyData["monthlyFee"],
+    };
+
     final response = await http.post(
       Uri.parse(baseUrl),
       headers: _headers(token),
@@ -51,15 +66,28 @@ class FamilyService {
       final api = json.decode(response.body);
       return api is Map && api.containsKey('data') ? api['data'] : api;
     } else {
-      throw Exception("Failed to add family");
+      throw Exception(
+        "Failed to add family: ${response.statusCode} - ${response.body}",
+      );
     }
   }
 
+  /// Update an existing family
   Future<Map<String, dynamic>> updateFamily(
     String id,
     Map<String, dynamic> familyData,
     String? token,
   ) async {
+    final url = Uri.parse("$baseUrl/$id");
+
+    final payload = {
+      "wardId": familyData["wardId"],
+      "headName": familyData["headName"],
+      "address": familyData["address"],
+      "membersCount": familyData["membersCount"],
+      "monthlyFee": familyData["monthlyFee"],
+    };
+
     final response = await http.put(
       Uri.parse("$baseUrl/$id"),
       headers: _headers(token),
@@ -74,7 +102,9 @@ class FamilyService {
       final api = json.decode(response.body);
       return api is Map && api.containsKey('data') ? api['data'] : api;
     } else {
-      throw Exception("Failed to update family");
+      throw Exception(
+        "Failed to update family: ${response.statusCode} - ${response.body}",
+      );
     }
   }
 
@@ -85,7 +115,9 @@ class FamilyService {
     );
 
     if (response.statusCode != 200) {
-      throw Exception("Failed to delete family");
+      throw Exception(
+        "Failed to delete family: ${response.statusCode} - ${response.body}",
+      );
     }
   }
 }
