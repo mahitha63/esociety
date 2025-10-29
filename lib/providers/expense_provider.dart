@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+import '../providers/auth_provider.dart' as auth_provider;
 
 enum ExpenseStatus { pending, approved, rejected }
 
@@ -28,39 +30,36 @@ class Expense {
 }
 
 class ExpenseProvider with ChangeNotifier {
-  // --- Dummy Data for Demonstration ---
-  final List<Expense> _expenses = [
-    Expense(
-      id: 'exp_001',
-      title: 'Security Services - May',
-      amount: 15000,
-      submittedBy: 'sharma',
-      submissionDate: DateTime.now().subtract(const Duration(days: 2)),
-      status: ExpenseStatus.pending,
-    ),
-    Expense(
-      id: 'exp_002',
-      title: 'Plumbing Repairs - Block B',
-      amount: 2500,
-      submittedBy: 'admin',
-      submissionDate: DateTime.now().subtract(const Duration(days: 10)),
-      status: ExpenseStatus.approved,
-      approvedBy: 'admin',
-      approvalDate: DateTime.now().subtract(const Duration(days: 8)),
-    ),
-    Expense(
-      id: 'exp_003',
-      title: 'Gardening Supplies',
-      amount: 1200,
-      submittedBy: 'patel',
-      submissionDate: DateTime.now().subtract(const Duration(days: 5)),
-      status: ExpenseStatus.rejected,
-    ),
-  ];
+  final List<Expense> _expenses = [];
+  bool _isLoading = false;
+  String? _error;
 
   List<Expense> get allExpenses => _expenses;
   List<Expense> get pendingExpenses =>
       _expenses.where((e) => e.status == ExpenseStatus.pending).toList();
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+
+  Future<void> loadFromBackend(BuildContext context) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final auth = auth_provider.AuthProvider();
+      // In a real app, you'd get provider from context; using storage-backed instance to reuse token
+      await Future.delayed(const Duration(milliseconds: 10));
+      final token = auth.token ?? '';
+      final list = await ApiService.fetchExpensesHttp(token);
+      _expenses
+        ..clear()
+        ..addAll(list);
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   void approveExpense(String id, String adminUsername) {
     final index = _expenses.indexWhere((e) => e.id == id);

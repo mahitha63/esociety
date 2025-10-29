@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 
 class SignupScreen extends StatefulWidget {
   static const routeName = '/signup';
@@ -53,16 +55,14 @@ class _SignupScreenState extends State<SignupScreen> {
       _isLoading = true;
     });
 
-    // In a real app, you would call your AuthProvider's signup method.
-    // For this example, we'll simulate a network call.
-    await Future.delayed(const Duration(seconds: 2));
-
-    // After successful signup, you might want to log the user in
-    // or navigate them to the login screen.
-    if (mounted) {
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      await auth.signup(_authData['username']!, _authData['password']!);
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
+      // After signup we can navigate to login or main; keeping login for clarity
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Signup successful! Please log in.'),
@@ -70,6 +70,15 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
       );
       Navigator.of(context).pushReplacementNamed(LoginScreen.routeName);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
     }
   }
 

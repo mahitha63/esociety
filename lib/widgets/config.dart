@@ -1,13 +1,19 @@
 // lib/config.dart
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 class Config {
-  // Toggle demo/mock mode. For now keep true for demo.
-  static const bool useMockData = true;
+  static const bool useMockData = false;
+  // If testing on Chrome / desktop
+  static const String webHost = 'localhost';
+  // Emulator: 10.0.2.2, Device: your PC LAN IP e.g. '192.168.1.100'
+  static const String emulatorHost = '10.0.2.2';
+  static const int port = 8088; // <- IMPORTANT: your backend runs on 8088
 
-  // When connecting to a real backend:
-  // - for Android emulator use 10.0.2.2
-  // - for device use the PC LAN IP (e.g., 192.168.1.100)
-  static const String host = '10.0.2.2';
-  static const int port = 8088;
+  static String get host {
+    if (kIsWeb) return webHost;
+    // change to emulatorHost if running on an emulator
+    return emulatorHost;
+  }
 
-  static String get baseUrl => 'http://$host:$port/api';
+  static String get baseUrl => 'http://${host}:${port}';
 }

@@ -46,7 +46,20 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
   Widget build(BuildContext context) {
     final familyProvider = Provider.of<FamilyProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final username = authProvider.username ?? "User";
+    final username = authProvider.username!;
+
+    // Load families on first build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (familyProvider.families.isEmpty) {
+        familyProvider.loadFamilies(token: authProvider.token);
+      }
+    });
+
+    // Check the user's status
+    final pendingSubmission = familyProvider.getPendingSubmissionForUser(
+      username,
+    );
+    final hasApproved = familyProvider.hasApprovedFamily(username);
 
     return Scaffold(
       backgroundColor: const Color(0xFFD6D3D3),
@@ -224,11 +237,13 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
           ),
           TextButton(
             onPressed: () {
-              provider.updateFamily(family['familyId'], {
-                ...family,
-                'headName': headNameController.text,
-              });
-              Navigator.pop(ctx);
+              // Update the family info in the provider
+              familyProvider.updateFamily(
+                family['id'],
+                family,
+                token: Provider.of<AuthProvider>(context, listen: false).token,
+              );
+              Navigator.of(ctx).pop();
             },
             child: const Text('Save'),
           ),
@@ -250,13 +265,111 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
           ),
           TextButton(
             onPressed: () {
-              provider.deleteFamily(id);
-              Navigator.pop(ctx);
+              familyProvider.deleteFamily(
+                familyId,
+                token: Provider.of<AuthProvider>(context, listen: false).token,
+              );
+              Navigator.of(ctx).pop();
             },
             child: const Text('Delete'),
           ),
         ],
       ),
     );
+  }
+
+  // Show a dialog with a form to add a new family
+  void _showAddFamilyDialog(
+    BuildContext context,
+    FamilyProvider familyProvider,
+  ) {
+    // Clear controllers for new entry
+    _nameController.clear();
+    _flatController.clear();
+    _membersController.clear();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add New Family'),
+        content: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(labelText: 'Family Name'),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a name.';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: _flatController,
+                  decoration: const InputDecoration(labelText: 'Flat Number'),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a flat number.';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: _membersController,
+                  decoration: const InputDecoration(
+                    labelText: 'Number of Members',
+                  ),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter member count.';
+                    }
+                    if (int.tryParse(value) == null || int.parse(value) <= 0) {
+                      return 'Please enter a valid number.';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => _submitFamilyData(ctx, familyProvider),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _submitFamilyData(
+    BuildContext dialogContext,
+    FamilyProvider familyProvider,
+  ) {
+    if (_formKey.currentState!.validate()) {
+      final username = Provider.of<AuthProvider>(
+        context,
+        listen: false,
+      ).username;
+      familyProvider.addFamily({
+        'id': DateTime.now().toString(), // Use a unique ID in a real app
+        'name': _nameController.text,
+        'flatNumber': _flatController.text,
+        'members': int.parse(_membersController.text),
+        'submittedBy': username, // Track who submitted the request
+      }, token: Provider.of<AuthProvider>(context, listen: false).token);
+      Navigator.of(dialogContext).pop(); // Close the dialog
+    }
   }
 }
