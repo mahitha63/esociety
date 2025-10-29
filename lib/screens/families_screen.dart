@@ -35,6 +35,13 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final username = authProvider.username!;
 
+    // Load families on first build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (familyProvider.families.isEmpty) {
+        familyProvider.loadFamilies(token: authProvider.token);
+      }
+    });
+
     // Check the user's status
     final pendingSubmission = familyProvider.getPendingSubmissionForUser(
       username,
@@ -371,7 +378,11 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
           TextButton(
             onPressed: () {
               // Update the family info in the provider
-              familyProvider.updateFamily(family['id'], family);
+              familyProvider.updateFamily(
+                family['id'],
+                family,
+                token: Provider.of<AuthProvider>(context, listen: false).token,
+              );
               Navigator.of(ctx).pop();
             },
             child: const Text('Save'),
@@ -401,7 +412,10 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
           ),
           TextButton(
             onPressed: () {
-              familyProvider.deleteFamily(familyId);
+              familyProvider.deleteFamily(
+                familyId,
+                token: Provider.of<AuthProvider>(context, listen: false).token,
+              );
               Navigator.of(ctx).pop();
             },
             child: const Text('Delete'),
@@ -501,7 +515,7 @@ class _FamiliesScreenState extends State<FamiliesScreen> {
         'flatNumber': _flatController.text,
         'members': int.parse(_membersController.text),
         'submittedBy': username, // Track who submitted the request
-      });
+      }, token: Provider.of<AuthProvider>(context, listen: false).token);
       Navigator.of(dialogContext).pop(); // Close the dialog
     }
   }

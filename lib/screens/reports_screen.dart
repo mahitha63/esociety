@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../widgets/dashboard_card.dart' as widgets;
+import '../services/api_service.dart';
+import '../providers/auth_provider.dart' as auth_provider;
 import '../models/reports.dart';
 import '../providers/maintenance_provider.dart';
 import '../providers/expense_provider.dart';
@@ -41,14 +43,118 @@ class _ReportsScreenState extends State<ReportsScreen>
   // Futures that resolve immediately with our dummy data.
   late Future<List<YearlyReportEntry>> _yearlyFuture;
   late Future<List<YoYEntry>> _yoyFuture;
+  late Future<List<MonthlyReportEntry>> _monthlyFuture;
 
   @override
   void initState() {
     super.initState();
     // The number of tabs is now 3 (Yearly, YoY, Expenses)
-    _tabController = TabController(length: 3, vsync: this);
-    _yearlyFuture = Future.value(_dummyYearlyData);
-    _yoyFuture = Future.value(_dummyYoYData);
+    _tabController = TabController(length: 4, vsync: this);
+    _yearlyFuture = ApiService.fetchYearlyReport(Provider.of<auth_provider.AuthProvider>(context, listen: false).token);
+    _yoyFuture = ApiService.fetchYoYComparison(Provider.of<auth_provider.AuthProvider>(context, listen: false).token);
+    _monthlyFuture = ApiService.fetchMonthlyReport(
+      Provider.of<auth_provider.AuthProvider>(context, listen: false).token,
+      year: DateTime.now().year,
+    );
+    // Load expenses list from backend
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+      expenseProvider.loadFromBackend(context);
+    });
+  }
+
+  Widget _monthlyTab() {
+    return FutureBuilder<List<MonthlyReportEntry>>(
+      future: _monthlyFuture,
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snap.hasError) {
+          return _errorWidget(() {});
+        }
+        final data = snap.data!;
+        final maxY = data
+            .map((d) => d.amountPaid)
+            .fold<double>(0.0, (prev, v) => v > prev ? v : prev);
+        final spots = data.asMap().entries.map((e) {
+          final idx = e.key;
+          return FlSpot(idx.toDouble(), e.value.amountPaid);
+        }).toList();
+
+        return Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            children: [
+              SizedBox(
+                height: 220,
+                child: LineChart(
+                  LineChartData(
+                    minX: 0,
+                    maxX: (data.length - 1).toDouble(),
+                    minY: 0,
+                    maxY: maxY * 1.2,
+                    titlesData: FlTitlesData(
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            final idx = value.toInt();
+                            if (idx < 0 || idx >= data.length) {
+                              return const SizedBox.shrink();
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 6.0),
+                              child: Text(
+                                data[idx].month,
+                                style: const TextStyle(fontSize: 10),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      leftTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: true),
+                      ),
+                    ),
+                    gridData: const FlGridData(show: true),
+                    borderData: FlBorderData(show: false),
+                    lineBarsData: [
+                      LineChartBarData(
+                        isCurved: true,
+                        barWidth: 3,
+                        color: Colors.blue,
+                        dotData: const FlDotData(show: false),
+                        spots: spots,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: ListView(
+                  children: data
+                      .map(
+                        (m) => Card(
+                          margin: const EdgeInsets.symmetric(vertical: 6),
+                          child: ListTile(
+                            leading: const Icon(Icons.calendar_month),
+                            title: Text('${m.month} ${m.year}'),
+                            subtitle: Text(
+                              'Paid: ₹${m.amountPaid.toStringAsFixed(0)} • Pending: ₹${m.amountPending.toStringAsFixed(0)}',
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Widget _summaryRow(BuildContext context, List<YearlyReportEntry> years) {
@@ -227,6 +333,15 @@ class _ReportsScreenState extends State<ReportsScreen>
     final allExpenses = expenseProvider.allExpenses;
     final currencyFormat = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
 
+    if (expenseProvider.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (expenseProvider.error != null) {
+      return _errorWidget(() {
+        expenseProvider.loadFromBackend(context);
+      });
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(12.0),
       itemCount: allExpenses.length,
@@ -290,6 +405,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         title: TabBar(
           controller: _tabController,
           tabs: const [
+            Tab(text: 'Monthly'),
             Tab(text: 'Yearly Inward'),
             Tab(text: 'YoY'),
             Tab(text: 'Expenses'),
@@ -300,7 +416,7 @@ class _ReportsScreenState extends State<ReportsScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [_yearlyTab(), _yoyTab(), _expensesTab()],
+        children: [_monthlyTab(), _yearlyTab(), _yoyTab(), _expensesTab()],
       ),
     );
   }

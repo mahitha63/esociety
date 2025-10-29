@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/family_service.dart';
+import '../providers/auth_provider.dart' as auth_provider;
 
 class FamilyProvider with ChangeNotifier {
   final FamilyService _service = FamilyService();
@@ -7,36 +8,7 @@ class FamilyProvider with ChangeNotifier {
   // --- Dummy Data for Demonstration ---
   // Pre-populating with data to show different states on the Families screen.
   // This will be replaced by API calls.
-  List<Map<String, dynamic>> _families = [
-    {
-      'id': 'fam_001',
-      'name': 'R Sharma',
-      'flatNumber': 'A-101',
-      'members': 4,
-      'submittedBy': 'sharma',
-    },
-    {
-      'id': 'fam_002',
-      'name': 'Singh',
-      'flatNumber': 'A-102',
-      'members': 3,
-      'submittedBy': 'singh',
-    },
-    {
-      'id': 'fam_003',
-      'name': 'Patel',
-      'flatNumber': 'B-204',
-      'members': 2,
-      'submittedBy': 'patel',
-    },
-    {
-      'id': 'fam_004',
-      'name': 'Khan',
-      'flatNumber': 'C-301',
-      'members': 5,
-      'submittedBy': 'khan',
-    },
-  ];
+  List<Map<String, dynamic>> _families = [];
   List<Map<String, dynamic>> get families => _families;
 
   final List<Map<String, dynamic>> _pendingApproval = [
@@ -60,9 +32,9 @@ class FamilyProvider with ChangeNotifier {
   ];
   List<Map<String, dynamic>> get pendingApproval => _pendingApproval;
 
-  Future<void> loadFamilies() async {
+  Future<void> loadFamilies({String? wardId, String? token}) async {
     try {
-      _families = await _service.fetchFamilies();
+      _families = await _service.fetchFamilies(token, wardId: wardId);
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -88,11 +60,17 @@ class FamilyProvider with ChangeNotifier {
     );
   }
 
-  Future<void> addFamily(Map<String, dynamic> familyData) async {
+  Future<void> addFamily(Map<String, dynamic> familyData, {String? token}) async {
     try {
-      // Maker adds → goes to pending approval
-      // Add a 'status' field to track the state.
-      _pendingApproval.add({...familyData, 'status': 'pending'});
+      // Create family immediately (backend handles maker-checker flow separately)
+      final created = await _service.addFamily(familyData, token);
+      _families.insert(0, {
+        'id': created['familyId']?.toString() ?? created['id']?.toString() ?? '',
+        'name': created['headName'] ?? familyData['name'],
+        'flatNumber': created['address'] ?? familyData['flatNumber'],
+        'members': created['membersCount'] ?? familyData['members'],
+        'submittedBy': familyData['submittedBy'],
+      });
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -122,9 +100,9 @@ class FamilyProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateFamily(String id, Map<String, dynamic> familyData) async {
+  Future<void> updateFamily(String id, Map<String, dynamic> familyData, {String? token}) async { 
     try {
-      await _service.updateFamily(id, familyData);
+      await _service.updateFamily(id, familyData, token);
       final index = _families.indexWhere((f) => f['id'] == id);
       if (index != -1) {
         _families[index] = familyData;
@@ -135,9 +113,9 @@ class FamilyProvider with ChangeNotifier {
     }
   }
 
-  Future<void> deleteFamily(String id) async {
+  Future<void> deleteFamily(String id, {String? token}) async {
     try {
-      await _service.deleteFamily(id);
+      await _service.deleteFamily(id, token);
       _families.removeWhere((f) => f['id'] == id);
       notifyListeners();
     } catch (e) {
